@@ -583,6 +583,10 @@ class RESTInboundSocket(InboundEventSocket):
         # if hangup url, handle http request
         if hangup_url:
             sip_uri = event['variable_plivo_sip_transfer_uri'] or ''
+            bill_duration = event['variable_billsec'] or ''
+            answer_duration = event['variable_duration'] or ''
+            answer_stamp = event['variable_answer_stamp'] or ''
+            end_stamp = event['variable_end_stamp'] or ''
             if sip_uri:
                 params['SIPTransfer'] = 'true'
                 params['SIPTransferURI'] = sip_uri
@@ -592,6 +596,16 @@ class RESTInboundSocket(InboundEventSocket):
             params['From'] = caller_num or ''
             params['Direction'] = direction or ''
             params['CallStatus'] = 'completed'
+            
+            if bill_duration:
+                params['BillDuration'] = bill_duration
+            if answer_stamp:
+                params['AnswerStamp'] = answer_stamp
+            if end_stamp:
+                params['EndStamp'] = end_stamp
+            if answer_duration:
+                params['Duration'] = answer_duration
+            
             spawn_raw(self.send_to_url, hangup_url, params)
 
     def send_to_url(self, url=None, params={}, method=None):
