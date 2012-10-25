@@ -5,7 +5,7 @@
 # Copyright (c) 2011 Plivo Team. See LICENSE for details.
 
 
-PLIVO_GIT_REPO=git://github.com/plivo/plivoframework.git
+PLIVO_GIT_REPO=git://github.com/bit4bit/plivoframework.git
 PLIVO_SETUP_SCRIPT=https://raw.github.com/plivo/plivoframework/master/scripts/ez_setup.py
 
 
