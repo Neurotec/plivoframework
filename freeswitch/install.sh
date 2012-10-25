@@ -98,6 +98,7 @@ sed -i \
 -e "s/#say\/mod_say_zh/say\/mod_say_zh/g" \
 -e "s/#say\/mod_say_hu/say\/mod_say_hu/g" \
 -e "s/#say\/mod_say_th/say\/mod_say_th/g" \
+-e "s/#applications\/mod_http_cache/applications\/mod_http_cache/g" \
 modules.conf
 make && make install && make sounds-install && make moh-install
 
