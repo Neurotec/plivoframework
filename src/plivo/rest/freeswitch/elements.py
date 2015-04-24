@@ -559,10 +559,12 @@ class Conference(Element):
 
                 # wait conference ending for this member
                 outbound_socket.log.debug("Conference: Room %s, waiting end ..." % self.room)
-                while outbound_socket.ready():
-                    event = outbound_socket.wait_for_action()
+                for x in range(10000):
+                    event = outbound_socket.wait_for_action(timeout=30, raise_on_hangup=True)
                     if event['Action'] == 'floor-change':
                         self._notify_floor_holder(outbound_socket)
+                        continue
+                    if event.is_empty():
                         continue
                     break
 
@@ -806,7 +808,7 @@ class Dial(Element):
         if self.caller_name == 'none':
             outbound_socket.set("effective_caller_id_name=''")
         elif self.caller_name:
-            outbound_socket.set("effective_caller_id_name='%s'" % self.caller_name)
+            outbound_socket.set("effective_caller_id_name=%s" % self.caller_name)
         else:
             outbound_socket.unset("effective_caller_id_name")
         # Set continue on fail
@@ -871,7 +873,7 @@ class Dial(Element):
 
         # Play Dial music or bridge the early media accordingly
         ringbacks = ''
-        if self.dial_music and self.dial_music != "none":
+        if self.dial_music and self.dial_music not in ("none", "real"):
             ringbacks = self._prepare_play_string(outbound_socket, self.dial_music)
             if ringbacks:
                 outbound_socket.set("playback_delimiter=!")
@@ -881,7 +883,7 @@ class Dial(Element):
                 outbound_socket.set("instant_ringback=true")
                 outbound_socket.set("ringback=%s" % play_str)
             else:
-                self.dialmusic = ''
+                self.dial_music = ''
         if not self.dial_music:
             outbound_socket.set("bridge_early_media=false")
             outbound_socket.set("instant_ringback=true")
@@ -889,6 +891,10 @@ class Dial(Element):
         elif self.dial_music == "none":
             outbound_socket.set("bridge_early_media=false")
             outbound_socket.unset("instant_ringback")
+            outbound_socket.unset("ringback")
+        elif self.dial_music == "real":
+            outbound_socket.set("bridge_early_media=true")
+            outbound_socket.set("instant_ringback=false")
             outbound_socket.unset("ringback")
 
         # Start dial
@@ -901,7 +907,7 @@ class Dial(Element):
             # send ring ready to originator
             outbound_socket.ring_ready()
             # execute bridge
-            outbound_socket.bridge(self.dial_str, lock=False)
+            res = outbound_socket.bridge(self.dial_str, lock=False)
 
             # set bind digit actions
             if self.digits_match and self.callback_url:
@@ -921,12 +927,23 @@ class Dial(Element):
                 outbound_socket.digit_action_set_realm(digit_realm)
 
             # waiting event
-            event = outbound_socket.wait_for_action()
+            for x in range(10000):
+                event = outbound_socket.wait_for_action(timeout=30, raise_on_hangup=True)
+                if event.is_empty():
+                    continue
+                elif event['Event-Name'] == 'CHANNEL_BRIDGE':
+                    outbound_socket.log.info("Dial bridged")
+                elif event['Event-Name'] == 'CHANNEL_UNBRIDGE':
+                    outbound_socket.log.info("Dial unbridged")
+                    break
+                elif event['Event-Name'] == 'CHANNEL_EXECUTE_COMPLETE':
+                    outbound_socket.log.info("Dial completed %s" % str(event))
+                    break
 
             # parse received events
             if event['Event-Name'] == 'CHANNEL_UNBRIDGE':
                 bleg_uuid = event['variable_bridge_uuid'] or ''
-                event = outbound_socket.wait_for_action()
+                event = outbound_socket.wait_for_action(timeout=30, raise_on_hangup=True)
             reason = None
             originate_disposition = event['variable_originate_disposition']
             hangup_cause = originate_disposition
@@ -1769,37 +1786,89 @@ class GetSpeech(Element):
 
     def execute(self, outbound_socket):
         speech_result = ''
-        grammar_file = ''
-        raw_grammar = None
-        gpath = None
-        raw_grammar = get_grammar_resource(outbound_socket, self.grammar)
-        if raw_grammar:
-            outbound_socket.log.debug("Found grammar : %s" % str(raw_grammar))
-            grammar_file = "%s_%s" % (datetime.now().strftime("%Y%m%d-%H%M%S"),
-                                        outbound_socket.get_channel_unique_id())
-            gpath = self.grammarPath + os.sep + grammar_file + '.gram'
-            outbound_socket.log.debug("Writing grammar to %s" % str(gpath))
-            try:
-                f = open(gpath, 'w')
-                f.write(raw_grammar)
-                f.close()
-            except Exception, e:
-                outbound_socket.log.error("GetSpeech result failure, cannot write grammar: %s" % str(grammar_file))
-                grammar_file = ''
-        elif raw_grammar is None:
-            outbound_socket.log.debug("Using grammar %s" % str(self.grammar))
-            grammar_file = self.grammar
-        else:
-            outbound_socket.log.error("GetSpeech result failure, cannot get grammar: %s" % str(self.grammar))
+        grammar_loaded = False
+        grammars = self.grammar.split(';')
 
-        if grammar_file:
-            if self.grammarPath:
-                grammar_full_path = self.grammarPath + os.sep + grammar_file
+        # unload previous grammars
+        outbound_socket.execute("detect_speech", "grammarsalloff")
+
+        for i, grammar in enumerate(grammars):
+            grammar_file = ''
+            gpath = None
+            raw_grammar = get_grammar_resource(outbound_socket, grammar)
+            if raw_grammar:
+                outbound_socket.log.debug("Found grammar : %s" % str(raw_grammar))
+                grammar_file = "%s_%s" % (datetime.now().strftime("%Y%m%d-%H%M%S"),
+                                          outbound_socket.get_channel_unique_id())
+                gpath = self.grammarPath + os.sep + grammar_file + '.gram'
+                outbound_socket.log.debug("Writing grammar to %s" % str(gpath))
+                try:
+                    f = open(gpath, 'w')
+                    f.write(raw_grammar)
+                    f.close()
+                except Exception, e:
+                    outbound_socket.log.error("GetSpeech result failure, cannot write grammar: %s" % str(grammar_file))
+                    grammar_file = ''
+            elif raw_grammar is None:
+                outbound_socket.log.debug("Using grammar %s" % str(grammar))
+                grammar_file = grammar
             else:
-                grammar_full_path = grammar_file
-            # set grammar tag name
-            grammar_tag = os.path.basename(grammar_file)
+                outbound_socket.log.error("GetSpeech result failure, cannot get grammar: %s" % str(grammar))
 
+            if grammar_file:
+                if self.grammarPath and grammar_file[:4] != 'url:' and grammar_file[:8] != 'builtin:':
+                    grammar_full_path = self.grammarPath + os.sep + grammar_file
+                else:
+                    if grammar_file[:4] == 'url:':
+                        grammar_file = grammar_file[4:]
+
+                    grammar_full_path = grammar_file
+                # set grammar tag name
+                grammar_tag = os.path.basename(grammar_file)
+
+                if i == 0:
+                    # init detection
+                    speech_args = "%s %s %s" % (self.engine, grammar_full_path, grammar_tag)
+                    res = outbound_socket.execute("detect_speech", speech_args)
+                    if not res.is_success():
+                        outbound_socket.log.error("GetSpeech Failed - %s" \
+                                                      % str(res.get_response()))
+                        if gpath:
+                            try:
+                                os.remove(gpath)
+                            except:
+                                pass
+                        return
+                    else:
+                        grammar_loaded = True
+                else:
+                    # define grammar
+                    speech_args = "grammar %s %s" % (grammar_full_path, grammar_tag)
+                    res = outbound_socket.execute("detect_speech", speech_args)
+                    if not res.is_success():
+                        outbound_socket.log.error("GetSpeech Failed - %s" \
+                                                      % str(res.get_response()))
+                        if gpath:
+                            try:
+                                os.remove(gpath)
+                            except:
+                                pass
+                        return
+                # enable grammar
+                speech_args = "grammaron %s" % (grammar_tag)
+                res = outbound_socket.execute("detect_speech", speech_args)
+                if not res.is_success():
+                    outbound_socket.log.error("GetSpeech Failed - %s" \
+                                                  % str(res.get_response()))
+                    if gpath:
+                        try:
+                            os.remove(gpath)
+                        except:
+                            pass
+                    return
+
+        if grammar_loaded == True:
+            outbound_socket.execute("detect_speech", "resume")
             for child_instance in self.children:
                 if isinstance(child_instance, Play):
                     sound_file = child_instance.sound_file_path
@@ -1851,20 +1920,6 @@ class GetSpeech(Element):
             else:
                 play_str = ''
 
-            # unload previous grammars
-            outbound_socket.execute("detect_speech", "grammarsalloff")
-            # load grammar
-            speech_args = "%s %s %s" % (self.engine, grammar_full_path, grammar_tag)
-            res = outbound_socket.execute("detect_speech", speech_args)
-            if not res.is_success():
-                outbound_socket.log.error("GetSpeech Failed - %s" \
-                                % str(res.get_response()))
-                if gpath:
-                    try:
-                        os.remove(gpath) 
-                    except:
-                        pass
-                return
             if play_str:
                 outbound_socket.playback(play_str)
                 event = outbound_socket.wait_for_action()
@@ -1911,20 +1966,24 @@ class GetSpeech(Element):
                                 % outbound_socket.get_channel_unique_id())
 
         if self.action:
-            params = {'Grammar':'', 'Confidence':'0', 'Mode':'', 'SpeechResult':''}
+            params = {'Grammar':'', 'Confidence':'0', 'Mode':'', 'SpeechResult':'', 'SpeechInterpretation': ''}
             if speech_result:
                 try:
                     result = ' '.join(speech_result.splitlines())
                     doc = etree.fromstring(result)
                     sinterp = doc.find('interpretation')
                     sinput = doc.find('interpretation/input')
+                    sinstance = doc.find('interpretation/instance/*')
+                    if sinstance == None:
+                        sinstance = doc.find('interpretation/instance')
                     if doc.tag != 'result':
                         raise RESTFormatException('No result Tag Present')
                     outbound_socket.log.debug("GetSpeech %s %s %s" % (str(doc), str(sinterp), str(sinput)))
                     params['Grammar'] = sinterp.get('grammar', '')
-                    params['Confidence'] = sinput.get('confidence', '0')
+                    params['Confidence'] = sinterp.get('confidence', '0')
                     params['Mode'] = sinput.get('mode', '')
                     params['SpeechResult'] = sinput.text
+                    params['SpeechInterpretation'] = sinstance.text
                 except Exception, e:
                     params['Confidence'] = "-1"
                     params['SpeechResultError'] = str(speech_result)

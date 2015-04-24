@@ -260,16 +260,23 @@ class PlivoRestApi(object):
         except ValueError:
             hangup_on_ring = -1
         exec_on_media = 1
-        if hangup_on_ring >= 0:
+
+        if hangup_on_ring == 0:
+            args_list.append("execute_on_media='hangup ORIGINATOR_CANCEL'")
+            args_list.append("execute_on_ring='hangup ORIGINATOR_CANCEL'")
+            exec_on_media += 1
+        elif hangup_on_ring > 0:
             args_list.append("execute_on_media_%d='sched_hangup +%d ORIGINATOR_CANCEL'" \
-                                                        % (hangup_on_ring, exec_on_media))
+                                                        % (exec_on_media, hangup_on_ring))
+            args_list.append("execute_on_ring='sched_hangup +%d ORIGINATOR_CANCEL'" \
+                                                        % hangup_on_ring)
             exec_on_media += 1
 
         # set send_digits
         if send_digits:
             if send_preanswer:
                 args_list.append("execute_on_media_%d='send_dtmf %s'" \
-                                                    % (send_digits, exec_on_media))
+                                                    % (exec_on_media, send_digits))
                 exec_on_media += 1
             else:
                 args_list.append("execute_on_answer='send_dtmf %s'" % send_digits)
@@ -548,6 +555,8 @@ class PlivoRestApi(object):
         else:
             hangup_url = get_post_param(request, 'HangupUrl')
             ring_url = get_post_param(request, 'RingUrl')
+            if not hangup_url:
+                hangup_url = answer_url
             if hangup_url and not is_valid_url(hangup_url):
                 msg = "HangupUrl is not Valid"
             elif ring_url and not is_valid_url(ring_url):
@@ -668,6 +677,8 @@ class PlivoRestApi(object):
             msg = "AnswerUrl is not Valid"
         else:
             hangup_url = get_post_param(request, 'HangupUrl')
+            if not hangup_url:
+                hangup_url = answer_url
             ring_url = get_post_param(request, 'RingUrl')
             if hangup_url and not is_valid_url(hangup_url):
                 msg = "HangupUrl is not Valid"

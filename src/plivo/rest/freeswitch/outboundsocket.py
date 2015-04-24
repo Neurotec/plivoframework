@@ -155,17 +155,23 @@ class PlivoOutboundEventSocket(OutboundEventSocket):
             raise RESTHangup()
         return response
 
-    def wait_for_action(self):
+    def wait_for_action(self, timeout=3600, raise_on_hangup=False):
         """
         Wait until an action is over
         and return action event.
         """
         self.log.debug("wait for action start")
         try:
-            event = self._action_queue.get(timeout=3600)
+            event = self._action_queue.get(timeout=timeout)
             self.log.debug("wait for action end %s" % str(event))
+            if raise_on_hangup is True and self.has_hangup():
+                self.log.warn("wait for action call hung up !")
+                raise RESTHangup()
             return event
         except gevent.queue.Empty:
+            if raise_on_hangup is True and self.has_hangup():
+                self.log.warn("wait for action call hung up !")
+                raise RESTHangup()
             self.log.warn("wait for action end timed out!")
             return Event()
 
@@ -194,6 +200,11 @@ class PlivoOutboundEventSocket(OutboundEventSocket):
         self.session_params['CallStatus'] = 'completed'
         # Prevent command to be stuck while waiting response
         self._action_queue.put_nowait(Event())
+
+    def on_channel_bridge(self, event):
+        # send bridge event to Dial
+        if self.current_element == 'Dial':
+            self._action_queue.put(event)
 
     def on_channel_unbridge(self, event):
         # special case to get bleg uuid for Dial

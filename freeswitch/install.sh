@@ -6,7 +6,7 @@
 
 
 FS_CONF_PATH=https://github.com/plivo/plivoframework/raw/master/freeswitch
-FS_GIT_REPO=git://git.freeswitch.org/freeswitch.git
+FS_GIT_REPO=https://freeswitch.org/stash/scm/fs/freeswitch.git
 FS_INSTALLED_PATH=/usr/local/freeswitch
 
 #####################################################
@@ -45,7 +45,7 @@ case $DIST in
     'CENTOS')
         yum -y update
 
-        VERS=$(cat /etc/redhat-release |cut -d' ' -f4 |cut -d'.' -f1)
+        VERS=$(rpm -qa \*-release | grep -Ei "oracle|redhat|centos" | cut -d"-" -f3)
 
         COMMON_PKGS=" autoconf automake bzip2 cpio curl curl-devel curl-devel expat-devel fileutils gcc-c++ gettext-devel gnutls-devel libjpeg-devel libogg-devel libtiff-devel libtool libvorbis-devel make ncurses-devel nmap openssl openssl-devel openssl-devel perl patch unixODBC unixODBC-devel unzip wget zip zlib zlib-devel bison sox"
         if [ "$VERS" = "6" ]
@@ -76,9 +76,9 @@ esac
 
 # Install FreeSWITCH
 cd $FS_BASE_PATH
-git clone $FS_GIT_REPO
+git clone $FS_GIT_REPO --depth=1 --branch=v1.2.stable
 cd $FS_BASE_PATH/freeswitch
-sh bootstrap.sh && ./configure --prefix=$FS_INSTALLED_PATH
+sh bootstrap.sh && ./configure --prefix=$FS_INSTALLED_PATH || exit 1
 [ -f modules.conf ] && cp modules.conf modules.conf.bak
 sed -i \
 -e "s/#applications\/mod_curl/applications\/mod_curl/g" \

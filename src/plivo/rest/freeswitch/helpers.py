@@ -346,11 +346,13 @@ def get_resource(socket, url):
         socket.log.error("Cache Error: %s" % str(e))
 
     if url[:7].lower() == "http://":
-        audio_path = url[7:]
-        url = "shout://%s" % audio_path
+        if url[-4:] != ".wav":
+            audio_path = url[7:]
+            url = "shout://%s" % audio_path
     elif url[:8].lower() == "https://":
-        audio_path = url[8:]
-        url = "shout://%s" % audio_path
+        if url[-4:] != ".wav":
+            audio_path = url[8:]
+            url = "shout://%s" % audio_path
 
     return url
 
@@ -362,6 +364,12 @@ def get_grammar_resource(socket, grammar):
         if grammar[:4] == 'raw:':
             socket.log.debug("Using raw grammar")
             return grammar[4:]
+        if grammar[:4] == 'url:':
+            socket.log.debug("Using raw grammar url")
+            return None
+        if grammar[:8] == 'builtin:':
+            socket.log.debug("Using builtin grammar")
+            return None
         if grammar[:7].lower() != "http://" \
             and grammar[:8].lower() != "https://":
             socket.log.debug("Using local grammar file")
