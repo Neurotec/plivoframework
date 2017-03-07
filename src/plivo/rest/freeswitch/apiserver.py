@@ -199,7 +199,9 @@ class PlivoRestServer(PlivoRestApi):
             self.default_answer_url = config.get('common', 'DEFAULT_ANSWER_URL')
 
             self.default_hangup_url = config.get('common', 'DEFAULT_HANGUP_URL', default='')
-
+            
+            self.default_record_url = config.get('common', 'DEFAULT_RECORD_URL', default='')
+            
             self.default_http_method = config.get('common', 'DEFAULT_HTTP_METHOD', default='')
             if not self.default_http_method in ('GET', 'POST'):
                 self.default_http_method = 'POST'
