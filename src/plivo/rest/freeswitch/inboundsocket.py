@@ -441,7 +441,11 @@ class RESTInboundSocket(InboundEventSocket):
                 self.set_hangup_complete(request_uuid, call_uuid, reason, event, hangup_url)
             except Exception, e:
                 self.log.error(str(e))
-
+        try:
+            notify_record(event)
+        except Exception e:
+            self.log.error(str(e))
+        
     def on_channel_state(self, event):
         # When transfer is ready to start,
         # channel goes in state CS_RESET
@@ -580,6 +584,8 @@ class RESTInboundSocket(InboundEventSocket):
                 params['ALegRequestUUID'] = aleg_request_uuid
             if sched_hangup_id:
                 params['ScheduledHangupId'] = sched_hangup_id
+
+                
         # if hangup url, handle http request
         if hangup_url:
             sip_uri = event['variable_plivo_sip_transfer_uri'] or ''
@@ -594,6 +600,27 @@ class RESTInboundSocket(InboundEventSocket):
             params['CallStatus'] = 'completed'
             spawn_raw(self.send_to_url, hangup_url, params)
 
+    def notify_record(self, event, params):
+        params = {}
+        # add extra params
+        params = self.get_extra_fs_vars(event)
+
+        record_url = event['variable_plivo_record_url']
+        if record_url:
+            self.log.debug("Using RecordUrl for CallUUID %s" \
+                           % call_uuid)
+        else:
+            if self.get_server().default_record_url:
+                record_url = self.get_server().default_record_url
+                self.log.debug("Using RecordUrl from DefaultRecordUrl for CallUUID %s" \
+                               % call_uuid)
+        if not record_url:
+            self.log.debug("No RecordUrl for incoming callUUID %s" % call_uuid)
+            return
+        params['RecordFile'] = event['variable_plivo_record_path']
+        
+        spawn_raw(self.send_to_url, record_url, params)
+        
     def send_to_url(self, url=None, params={}, method=None):
         if method is None:
             method = self.get_server().default_http_method
