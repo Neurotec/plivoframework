@@ -256,7 +256,7 @@ class PlivoRestApi(object):
             args_list.append("plivo_record_on=%s" % record_on)
             args_list.append("plivo_record_path=%s" % record_path)
             args_list.append("media_bug_answer_req=true")
-            args_list.append("execute_on_answer=record_session %s" % record_path)
+            args_list.append("execute_on_answer='record_session %s'" % record_path)
         else:
             args_list.append("plivo_record_on=none")
 
@@ -591,18 +591,18 @@ class PlivoRestApi(object):
                 record_filepath = get_post_param(request, 'RecordFilePath')
                 record_filename = get_post_param(request, 'RecordFileName')
                 record_fileformat = get_post_param(request, 'RecordFileFormat')
-                record_url = get_post_param(request, 'RecordUrl') or "localhost:9876"
+                record_url = get_post_param(request, 'RecordUrl')
 
                 if not record_fileformat:
                     record_fileformat = "mp3"
                 if not record_fileformat in ("mp3", "wav"):
                     msg = "RecordFileFormat Parameter must be 'mp3' or 'wav'"
-                    return self.send_response(Success=False, msg)
+                    return self.send_response(Success=False, Message=msg)
 
                 if record_filepath:
                     record_filepath = os.path.normpath(record_filepath) + os.sep
                 if not record_filename:
-                    record_filename = "%s_%s" %(datetime.now().strftime("%Y%m%d-%H%M%S"))
+                    record_filename = "%s_%s" %(datetime.now().strftime("%Y%m%d-%H%M%S"), "record")
                 record_path = "%s%s.%s" % (record_filepath, record_filename, record_fileformat)
 
                 call_req = self._prepare_call_request(
@@ -740,13 +740,13 @@ class PlivoRestApi(object):
                 record_filepath = get_post_param(request, 'RecordFilePath')
                 record_filename = get_post_param(request, 'RecordFileName')
                 record_fileformat = get_post_param(request, 'RecordFileFormat')
-                record_url = get_post_param(request, 'RecordUrl') or "localhost:9876"
+                record_url = get_post_param(request, 'RecordUrl')
                 
                 if not record_fileformat:
                     record_fileformat = "mp3"
                 if not record_fileformat in ("mp3", "wav"):
                     msg = "RecordFileFormat Parameter must be 'mp3' or 'wav'"
-                    return self.send_response(Success=False, msg)
+                    return self.send_response(Success=False, Message=msg)
 
                 if record_filepath:
                     record_filepath = os.path.normpath(record_filepath) + os.sep
