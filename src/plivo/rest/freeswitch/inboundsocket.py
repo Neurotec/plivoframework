@@ -633,6 +633,7 @@ class RESTInboundSocket(InboundEventSocket):
         
         params['callbackUrl'] = event['variable_plivo_record_callbackUrl']
         params['callbackMethod'] = event['variable_plivo_record_callbackMethod']
+        params['awsBucket'] = event['variable_plivo_record_awsBucket']
         spawn_raw(self.send_to_url, record_url, params)
         
     def send_to_url(self, url=None, params={}, method=None):
