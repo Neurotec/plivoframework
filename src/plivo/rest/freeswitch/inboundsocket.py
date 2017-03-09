@@ -629,6 +629,9 @@ class RESTInboundSocket(InboundEventSocket):
         else:
             params['RecordDuration'] = -1
         params['RecordDurationMs'] = record_duration_ms
+        
+        params['callbackUrl'] = event['variable_plivo_record_callbackUrl']
+        params['callbackMethod'] = event['variable_plivo_record_callbackMethod']
         spawn_raw(self.send_to_url, record_url, params)
         
     def send_to_url(self, url=None, params={}, method=None):

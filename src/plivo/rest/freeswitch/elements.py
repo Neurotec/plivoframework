@@ -1473,9 +1473,6 @@ class Record(Element):
             filename = "%s_%s" % (datetime.now().strftime("%Y%m%d-%H%M%S"),
                                 outbound_socket.get_channel_unique_id())
         record_file = "%s%s.%s" % (self.file_path, filename, self.file_format)
-        #compatibilidad con primer desarrollo
-        outbound_socket.set("plivo_record_url='%s'" % self.callbackUrl)
-        outbound_socket.set("plivo_record_path='%s'" % record_file)
         #implementacion plivo.com
         outbound_socket.set("plivo_record_awsBucket='%s'" % self.awsBucket)
         outbound_socket.set("plivo_record_callbackUrl='%s'" % self.callbackUrl)
