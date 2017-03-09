@@ -442,8 +442,8 @@ class RESTInboundSocket(InboundEventSocket):
             except Exception, e:
                 self.log.error(str(e))
         try:
-            notify_record(event)
-        except Exception e:
+            self.notify_record(event, call_uuid)
+        except Exception, e:
             self.log.error(str(e))
         
     def on_channel_state(self, event):
@@ -600,12 +600,13 @@ class RESTInboundSocket(InboundEventSocket):
             params['CallStatus'] = 'completed'
             spawn_raw(self.send_to_url, hangup_url, params)
 
-    def notify_record(self, event, params):
+    def notify_record(self, event, call_uuid):
         params = {}
         # add extra params
         params = self.get_extra_fs_vars(event)
-
+        record_file = event['variable_plivo_record_path']
         record_url = event['variable_plivo_record_url']
+        
         if record_url:
             self.log.debug("Using RecordUrl for CallUUID %s" \
                            % call_uuid)
