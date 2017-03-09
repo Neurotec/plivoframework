@@ -618,7 +618,17 @@ class RESTInboundSocket(InboundEventSocket):
             self.log.debug("No RecordUrl for incoming callUUID %s" % call_uuid)
             return
         params['RecordFile'] = event['variable_plivo_record_path']
-        
+
+        try:
+            record_duration_ms = int(event['variable_record_ms'])
+        except (ValueError, TypeError):
+            outbound_socket.log.warn("Invalid 'record_ms' : '%s'" % str(record_ms))
+            record_duration_ms = -1
+        if record_duration_ms > 0:
+            params['RecordDuration'] = record_duration_ms / 1000
+        else:
+            params['RecordDuration'] = -1
+        params['RecordDurationMs'] = record_duration_ms
         spawn_raw(self.send_to_url, record_url, params)
         
     def send_to_url(self, url=None, params={}, method=None):

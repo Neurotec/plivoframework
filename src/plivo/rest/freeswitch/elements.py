@@ -109,7 +109,12 @@ ELEMENTS_DEFAULT_PARAMS = {
                 'fileFormat': 'mp3',
                 'fileName': '',
                 'redirect': 'true',
-                'bothLegs': 'false'
+                'bothLegs': 'false',
+                'startOnDialAnswer': 'false',
+                'recordSession': 'false',
+                'callbackUrl': '',
+                'callbackMethod': 'POST',
+                'awsBucket': 'plivorecord',
         },
         'SIPTransfer': {
                 #url: SET IN ELEMENT BODY
@@ -1391,6 +1396,11 @@ class Record(Element):
               no beep will be played
     redirect: if 'false', don't redirect to 'action', only request url
         and continue to next element. (default 'true')
+   startOnDialAnswer: Record call when called party answers in a Dial (true/false, default false). No beep will be played.
+   recordSession: Record current call session in background (true/false, default false). No beep will be played.
+   awsBucket: Bucket who be used.
+   callbackUrl: If set, this URL is fired in background when the recorded file is ready to be used. See the callbackUrl Request Parameters table below for more information.
+   callbackMethod: Method used to notify the callbackUrl.
     """
     def __init__(self):
         Element.__init__(self)
@@ -1406,7 +1416,12 @@ class Record(Element):
         self.action = ''
         self.method = ''
         self.redirect = True
-
+        self.startOnDialAnswer = False
+        self.awsBucket = 'plivorecord'
+        self.recordSession = False
+        self.callbackUrl = ""
+        self.callbackMethod = "POST"
+        
     def parse_element(self, element, uri=None):
         Element.parse_element(self, element, uri)
         max_length = self.extract_attribute_value("maxLength")
@@ -1422,7 +1437,10 @@ class Record(Element):
         self.filename = self.extract_attribute_value("fileName")
         self.both_legs = self.extract_attribute_value("bothLegs") == 'true'
         self.redirect = self.extract_attribute_value("redirect") == 'true'
-
+        self.startOnDialAnswer = self.extract_attribute_value("startOnDialAnswer") == 'true'
+        self.recordSession = self.extract_attribute_value("recordSession") == 'true'
+        self.awsBucket = self.extract_attribute_value("awsBucket")
+        
         self.action = self.extract_attribute_value("action")
         method = self.extract_attribute_value("method")
         if not method in ('GET', 'POST'):
@@ -1455,13 +1473,38 @@ class Record(Element):
             filename = "%s_%s" % (datetime.now().strftime("%Y%m%d-%H%M%S"),
                                 outbound_socket.get_channel_unique_id())
         record_file = "%s%s.%s" % (self.file_path, filename, self.file_format)
-
-        if self.both_legs:
+        #compatibilidad con primer desarrollo
+        outbound_socket.set("plivo_record_url='%s'" % self.callbackUrl)
+        outbound_socket.set("plivo_record_path='%s'" % record_file)
+        #implementacion plivo.com
+        outbound_socket.set("plivo_record_awsBucket='%s'" % self.awsBucket)
+        outbound_socket.set("plivo_record_callbackUrl='%s'" % self.callbackUrl)
+        outbound_socket.set("plivo_record_callbackMethod=%s" % self.callbackMethod)
+        
+        if self.recordSession:
+            if self.startOnDialAnswer:
+                outbound_socket.set("RECORD_STEREO=true")
+                outbound_socket.set("media_bug_answer_req=true")
+                outbound_socket.set("execute_on_answer_1=record_session %s" % record_file)
+                
+                outbound_socket.log.info("Recording on Answer")
+            else:
+                outbound_socket.api("record_session %s" % record_file)
+            outbound_socket.api("sched_api +%s none stop_record_session %s stop" \
+                                % (self.max_length, record_file)
+            )
+        else if self.both_legs:
             outbound_socket.set("RECORD_STEREO=true")
-            outbound_socket.api("uuid_record %s start %s" \
-                                %  (outbound_socket.get_channel_unique_id(),
-                                   record_file)
-                               )
+            if self.startOnDialAnswer:
+                outbound_socket.set("api_on_answer_2=uuid_record %s start %s" \
+                                    %  (outbound_socket.get_channel_unique_id(),
+                                        record_file)
+                )
+            else:
+                outbound_socket.api("uuid_record %s start %s" \
+                                    %  (outbound_socket.get_channel_unique_id(),
+                                        record_file)
+                )
             outbound_socket.api("sched_api +%s none uuid_record %s stop %s" \
                                 % (self.max_length,
                                    outbound_socket.get_channel_unique_id(),
