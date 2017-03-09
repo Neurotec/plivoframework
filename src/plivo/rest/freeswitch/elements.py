@@ -115,6 +115,7 @@ ELEMENTS_DEFAULT_PARAMS = {
                 'callbackUrl': '',
                 'callbackMethod': 'POST',
                 'awsBucket': 'plivorecord',
+                'awsRegion': 'us-east-1',
         },
         'SIPTransfer': {
                 #url: SET IN ELEMENT BODY
@@ -1399,6 +1400,7 @@ class Record(Element):
    startOnDialAnswer: Record call when called party answers in a Dial (true/false, default false). No beep will be played.
    recordSession: Record current call session in background (true/false, default false). No beep will be played.
    awsBucket: Bucket who be used.
+   awsRegion: Region AWs, default 'us-east-1'
    callbackUrl: If set, this URL is fired in background when the recorded file is ready to be used. See the callbackUrl Request Parameters table below for more information.
    callbackMethod: Method used to notify the callbackUrl.
     """
@@ -1418,6 +1420,7 @@ class Record(Element):
         self.redirect = True
         self.startOnDialAnswer = False
         self.awsBucket = 'plivorecord'
+        self.awsRegion = 'us-east-1'
         self.recordSession = False
         self.callbackUrl = ""
         self.callbackMethod = "POST"
@@ -1475,6 +1478,7 @@ class Record(Element):
         record_file = "%s%s.%s" % (self.file_path, filename, self.file_format)
         #implementacion plivo.com
         outbound_socket.set("plivo_record_awsBucket='%s'" % self.awsBucket)
+        outbound_socket.set("plivo_record_awsRegion='%s'" % self.awsRegion)
         outbound_socket.set("plivo_record_callbackUrl='%s'" % self.callbackUrl)
         outbound_socket.set("plivo_record_callbackMethod=%s" % self.callbackMethod)
         
