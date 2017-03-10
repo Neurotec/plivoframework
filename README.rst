@@ -15,6 +15,17 @@ Documentation
 See `Plivo Documentation <http://docs.plivo.org>`_ for more information.
 
 
+<Record/>
+~~~~~~~~~~~~~~~~
+
+Se agregan los siguientes atributos:
+
+  * *awsRegion* :  especificar la region aws
+  * *awsBucket* : especificar el bucket aws
+  * *recordSession* : grabar en fondo
+  * *startOnDialAnswer* : iniciar grabacion al contestar
+    
+
 License
 ~~~~~~~~
 

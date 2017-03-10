@@ -442,7 +442,7 @@ class RESTInboundSocket(InboundEventSocket):
             except Exception, e:
                 self.log.error(str(e))
         try:
-            self.notify_record(event, call_uuid)
+            self.notify_to_service_s3record(event, call_uuid)
         except Exception, e:
             self.log.error(str(e))
         
@@ -600,7 +600,7 @@ class RESTInboundSocket(InboundEventSocket):
             params['CallStatus'] = 'completed'
             spawn_raw(self.send_to_url, hangup_url, params)
 
-    def notify_record(self, event, call_uuid):
+    def notify_to_service_s3record(self, event, call_uuid):
         params = {}
         # add extra params
         params = self.get_extra_fs_vars(event)
@@ -635,7 +635,7 @@ class RESTInboundSocket(InboundEventSocket):
         params['callbackMethod'] = event['variable_plivo_record_callbackMethod']
         params['awsBucket'] = event['variable_plivo_record_awsBucket']
         params['awsRegion'] = event['variable_plivo_record_awsRegion']
-        
+
         spawn_raw(self.send_to_url, record_url, params)
         
     def send_to_url(self, url=None, params={}, method=None):

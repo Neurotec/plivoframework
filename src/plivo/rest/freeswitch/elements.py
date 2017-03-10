@@ -1443,6 +1443,7 @@ class Record(Element):
         self.startOnDialAnswer = self.extract_attribute_value("startOnDialAnswer") == 'true'
         self.recordSession = self.extract_attribute_value("recordSession") == 'true'
         self.awsBucket = self.extract_attribute_value("awsBucket")
+        self.awsRegion = self.extract_attribute_value("awsRegion")
         
         self.action = self.extract_attribute_value("action")
         method = self.extract_attribute_value("method")
@@ -1529,10 +1530,14 @@ class Record(Element):
             outbound_socket.stop_dtmf()
             outbound_socket.log.info("Record Completed")
 
+        #expected endpoint for object
+        record_aws_url = "http://%s.s3.amazonaws.com/%s" % (self.awsBucket, os.path.basename(record_file))
+        
         # If action is set, redirect to this url
         # Otherwise, continue to next Element
         if self.action and is_valid_url(self.action):
             params = {}
+            params['RecordUrl'] = record_aws_url
             params['RecordingFileFormat'] = self.file_format
             params['RecordingFilePath'] = self.file_path
             params['RecordingFileName'] = filename
@@ -1553,8 +1558,15 @@ class Record(Element):
                         record_ms = str(int(record_ms)) # check if integer
                 except (ValueError, TypeError):
                     outbound_socket.log.warn("Invalid 'record_ms' : '%s'" % str(record_ms))
-                    record_ms = "-1"
-                params['RecordingDuration'] = record_ms
+                    record_ms = -1
+
+                if record_ms > 0:
+                    params['RecordDuration'] = record_ms / 1000
+                else:
+                    params['RecordDuration'] = -1
+                    
+                params['RecordingDurationMs'] = record_ms
+                
                 record_digits = event.get_header("variable_playback_terminator_used")
                 if record_digits:
                     params['Digits'] = record_digits
