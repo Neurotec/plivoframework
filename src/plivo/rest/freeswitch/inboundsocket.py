@@ -441,10 +441,10 @@ class RESTInboundSocket(InboundEventSocket):
                 self.set_hangup_complete(request_uuid, call_uuid, reason, event, hangup_url)
             except Exception, e:
                 self.log.error(str(e))
-        try:
-            self.notify_to_service_s3record(event, call_uuid)
-        except Exception, e:
-            self.log.error(str(e))
+        #try:
+        #    self.notify_to_service_s3record(event, call_uuid)
+        #except Exception, e:
+        #    self.log.error(str(e))
         
     def on_channel_state(self, event):
         # When transfer is ready to start,
@@ -605,18 +605,18 @@ class RESTInboundSocket(InboundEventSocket):
         # add extra params
         params = self.get_extra_fs_vars(event)
         record_file = event['variable_plivo_record_path']
-        record_url = event['variable_plivo_record_url']
+        record_url = event['variable_plivo_s3record_url']
         
         if record_url:
-            self.log.debug("Using RecordUrl for CallUUID %s" \
+            self.log.debug("Using S3RecordUrl for CallUUID %s" \
                            % call_uuid)
         else:
-            if self.get_server().default_record_url:
-                record_url = self.get_server().default_record_url
-                self.log.debug("Using RecordUrl from DefaultRecordUrl for CallUUID %s" \
+            if self.get_server().default_s3record_url:
+                record_url = self.get_server().default_s3record_url
+                self.log.debug("Using S3RecordUrl from DefaultS3RecordUrl for CallUUID %s" \
                                % call_uuid)
         if not record_url:
-            self.log.debug("No RecordUrl for incoming callUUID %s" % call_uuid)
+            self.log.debug("No S3RecordUrl for incoming callUUID %s" % call_uuid)
             return
         params['RecordFile'] = event['variable_plivo_record_path']
 

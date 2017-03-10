@@ -1494,8 +1494,8 @@ class Record(Element):
                 outbound_socket.api("record_session %s" % record_file)
             outbound_socket.api("sched_api +%s none stop_record_session %s stop" \
                                 % (self.max_length, record_file)
-            )
-        else if self.both_legs:
+                            )
+        elif self.both_legs:
             outbound_socket.set("RECORD_STEREO=true")
             if self.startOnDialAnswer:
                 outbound_socket.set("api_on_answer_2=uuid_record %s start %s" \
