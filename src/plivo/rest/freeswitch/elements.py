@@ -865,8 +865,24 @@ class Dial(Element):
                 confirm_cancel = "group_confirm_cancel_timeout=1"
                 dial_confirm = ",%s,%s,%s,playback_delimiter=!" % (confirm_music_str, confirm_key_str, confirm_cancel)
 
+        record_flag = ""
+        if outbound_socket.session_params.pop('recordDialStartOnDialAnswer', False):
+            record_path = outbound_socket.session_params.pop('recordDialPath')
+            record_dial_max_length = outbound_socket.session_params.pop('recordDialMaxLength')
+            start_record = "api_on_answer_2='uuid_record %s start %s'" \
+                           % (outbound_socket.get_channel_unique_id(),
+                              record_path)
+            stop_record_sched = "api_on_answer_3='sched_api +%s none uuid_record %s stop %s'" \
+                          % (record_dial_max_length,
+                             outbound_socket.get_channel_unique_id(),
+                             record_path)
+            stop_record = "api_on_hangup='uuid_record %s stop %s'" \
+                          % (outbound_socket.get_channel_unique_id(),
+                             record_path)
+            record_flag = "RECORD_STEREO=true,%s,%s,%s," % (start_record, stop_record_sched, stop_record)
+            
         # Append time limit and group confirm to dial string
-        self.dial_str = '<%s,%s%s>%s' % (ring_flag, dial_time_limit, dial_confirm, self.dial_str)
+        self.dial_str = '<%s,%s%s%s>%s' % (ring_flag, record_flag, dial_time_limit, dial_confirm, self.dial_str)
         # Ugly hack to force use of enterprise originate because simple originate lacks speak support in ringback
         if len(numbers) < 2:
             self.dial_str += ':_:'
@@ -1482,39 +1498,26 @@ class Record(Element):
         outbound_socket.set("plivo_record_awsRegion='%s'" % self.awsRegion)
         outbound_socket.set("plivo_record_callbackUrl='%s'" % self.callbackUrl)
         outbound_socket.set("plivo_record_callbackMethod=%s" % self.callbackMethod)
-        
-        if self.recordSession:
-            if self.startOnDialAnswer:
-                outbound_socket.set("RECORD_STEREO=true")
-                outbound_socket.set("media_bug_answer_req=true")
-                outbound_socket.set("execute_on_answer_1=record_session %s" % record_file)
-                
-                outbound_socket.log.info("Recording on Answer")
-            else:
-                outbound_socket.api("record_session %s" % record_file)
-            outbound_socket.api("sched_api +%s none stop_record_session %s stop" \
-                                % (self.max_length, record_file)
-                            )
+
+        if self.startOnDialAnswer:
+            outbound_socket.session_params['recordDialPath'] = record_file
+            outbound_socket.session_params['recordDialMaxLength'] = self.max_length
+            outbound_socket.session_params['recordDialStartOnDialAnswer'] = True
+            outbound_socket.log.info("Recording next Dial on Answer")
         elif self.both_legs:
             outbound_socket.set("RECORD_STEREO=true")
-            if self.startOnDialAnswer:
-                outbound_socket.set("api_on_answer_2=uuid_record %s start %s" \
-                                    %  (outbound_socket.get_channel_unique_id(),
-                                        record_file)
-                )
-            else:
-                outbound_socket.api("uuid_record %s start %s" \
-                                    %  (outbound_socket.get_channel_unique_id(),
-                                        record_file)
-                )
+            outbound_socket.api("uuid_record %s start %s" \
+                                %  (outbound_socket.get_channel_unique_id(),
+                                    record_file)
+                            )
             outbound_socket.api("sched_api +%s none uuid_record %s stop %s" \
                                 % (self.max_length,
                                    outbound_socket.get_channel_unique_id(),
                                    record_file)
-                               )
+                            )
             outbound_socket.log.info("Record Both Executed")
         else:
-            if self.play_beep:
+            if self.play_beep and (self.recordSession == False and self.startOnDialAnswer == False):
                 beep = 'tone_stream://%(300,200,700)'
                 outbound_socket.playback(beep)
                 event = outbound_socket.wait_for_action()

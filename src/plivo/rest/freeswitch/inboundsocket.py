@@ -441,10 +441,10 @@ class RESTInboundSocket(InboundEventSocket):
                 self.set_hangup_complete(request_uuid, call_uuid, reason, event, hangup_url)
             except Exception, e:
                 self.log.error(str(e))
-        #try:
-        #    self.notify_to_service_s3record(event, call_uuid)
-        #except Exception, e:
-        #    self.log.error(str(e))
+        try:
+            self.notify_to_service_s3record(event, call_uuid)
+        except Exception, e:
+            self.log.error(str(e))
         
     def on_channel_state(self, event):
         # When transfer is ready to start,
@@ -623,12 +623,11 @@ class RESTInboundSocket(InboundEventSocket):
         try:
             record_duration_ms = int(event['variable_record_ms'])
         except (ValueError, TypeError):
-            outbound_socket.log.warn("Invalid 'record_ms' : '%s'" % str(record_ms))
-            record_duration_ms = -1
+            record_duration_ms = 0
         if record_duration_ms > 0:
             params['RecordDuration'] = record_duration_ms / 1000
         else:
-            params['RecordDuration'] = -1
+            params['RecordDuration'] = 0
         params['RecordDurationMs'] = record_duration_ms
         
         params['callbackUrl'] = event['variable_plivo_record_callbackUrl']
