@@ -7,6 +7,7 @@ import os.path
 from datetime import datetime
 import re
 import uuid
+import time
 try:
     import xml.etree.cElementTree as etree
 except ImportError:
@@ -879,7 +880,9 @@ class Dial(Element):
             stop_record = "api_on_hangup='uuid_record %s stop %s'" \
                           % (outbound_socket.get_channel_unique_id(),
                              record_path)
-            record_flag = "RECORD_STEREO=true,%s,%s,%s," % (start_record, stop_record_sched, stop_record)
+            start_record_epoch = "api_on_answer_4='uuid_setvar %s plivo_recording_start %d" % (outbound_socket.get_channel_unique_id(), int(time.time()))
+            
+            record_flag = "RECORD_STEREO=true,%s,%s,%s,%s,%s," % (start_record, stop_record_sched, stop_record, start_record_epoch)
             
         # Append time limit and group confirm to dial string
         self.dial_str = '<%s,%s%s%s>%s' % (ring_flag, record_flag, dial_time_limit, dial_confirm, self.dial_str)
@@ -1498,24 +1501,31 @@ class Record(Element):
         outbound_socket.set("plivo_record_awsRegion='%s'" % self.awsRegion)
         outbound_socket.set("plivo_record_callbackUrl='%s'" % self.callbackUrl)
         outbound_socket.set("plivo_record_callbackMethod=%s" % self.callbackMethod)
-
+        outbound_socket.set("plivo_record_path='%s'" % record_file)
+        if self.action:
+            outbound_socket.set("plivo_record_action_url='%s'" % self.action)
+        else:
+            outbound_socket.set("plivo_record_action_url=''")
+            
         if self.startOnDialAnswer:
             outbound_socket.session_params['recordDialPath'] = record_file
             outbound_socket.session_params['recordDialMaxLength'] = self.max_length
             outbound_socket.session_params['recordDialStartOnDialAnswer'] = True
             outbound_socket.log.info("Recording next Dial on Answer")
-        elif self.both_legs:
+        elif self.recordSession or self.both_legs:
             outbound_socket.set("RECORD_STEREO=true")
             outbound_socket.api("uuid_record %s start %s" \
                                 %  (outbound_socket.get_channel_unique_id(),
                                     record_file)
                             )
-            outbound_socket.api("sched_api +%s none uuid_record %s stop %s" \
+            outbound_socket.api("uuid_setvar %s plivo_recording_start %d" \
+                                % (outbound_socket.get_channel_unique_id(), int(time.time())))
+            outbound_socket.api("sched_api +%s record_stop uuid_record %s stop %s" \
                                 % (self.max_length,
                                    outbound_socket.get_channel_unique_id(),
                                    record_file)
                             )
-            outbound_socket.log.info("Record Both Executed")
+            outbound_socket.log.info("Record/Session Both Executed")
         else:
             if self.play_beep and (self.recordSession == False and self.startOnDialAnswer == False):
                 beep = 'tone_stream://%(300,200,700)'
@@ -1527,12 +1537,12 @@ class Record(Element):
             outbound_socket.start_dtmf()
             outbound_socket.log.info("Record Started")
             outbound_socket.record(record_file, self.max_length,
-                                self.silence_threshold, self.timeout,
-                                self.finish_on_key)
+                                   self.silence_threshold, self.timeout,
+                                   self.finish_on_key)
             event = outbound_socket.wait_for_action()
             outbound_socket.stop_dtmf()
             outbound_socket.log.info("Record Completed")
-
+                
         #expected endpoint for object
         record_aws_url = "http://%s.s3.amazonaws.com/%s" % (self.awsBucket, os.path.basename(record_file))
         
@@ -1569,8 +1579,23 @@ class Record(Element):
                     params['RecordDuration'] = -1
                     
                 params['RecordingDurationMs'] = record_ms
+                params['RecordingStartMs'] = -1
+                params['RecordingStopMs'] = -1
                 
-                record_digits = event.get_header("variable_playback_terminator_used")
+                if not self.startOnDialAnswer:
+                    try:
+                        record_start_epoch = int(event.get_header('variable_plivo_recording_start'))
+                    except (ValueError, TypeError):
+                        record_start_epoch = -1
+                    if record_start_epoch > 0:
+                        params['RecordingStartMs'] = record_start_epoch
+                        params['RecordingEndMs'] = record_start_epoch + record_ms
+                        
+                if event:
+                    record_digits = event.get_header("variable_playback_terminator_used")
+                else:
+                    record_digits = None
+                    
                 if record_digits:
                     params['Digits'] = record_digits
                 else:

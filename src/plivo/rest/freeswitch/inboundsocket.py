@@ -606,7 +606,7 @@ class RESTInboundSocket(InboundEventSocket):
         params = self.get_extra_fs_vars(event)
         record_file = event['variable_plivo_record_path']
         record_url = event['variable_plivo_s3record_url']
-        
+
         if record_url:
             self.log.debug("Using S3RecordUrl for CallUUID %s" \
                            % call_uuid)
@@ -619,17 +619,27 @@ class RESTInboundSocket(InboundEventSocket):
             self.log.debug("No S3RecordUrl for incoming callUUID %s" % call_uuid)
             return
         params['RecordFile'] = event['variable_plivo_record_path']
-
+        params['RecordingStartMs'] = -1
+        params['RecordingStopMs'] = -1
         try:
             record_duration_ms = int(event['variable_record_ms'])
         except (ValueError, TypeError):
-            record_duration_ms = 0
+            record_duration_ms = -1
         if record_duration_ms > 0:
             params['RecordDuration'] = record_duration_ms / 1000
         else:
-            params['RecordDuration'] = 0
+            params['RecordDuration'] = -1
         params['RecordDurationMs'] = record_duration_ms
         
+        try:
+            record_start_epoch = int(event.get_header('variable_plivo_recording_start'))
+        except (ValueError, TypeError):
+            record_start_epoch = -1
+        if record_start_epoch > 0:
+            params['RecordingStartMs'] = record_start_epoch
+            params['RecordingEndMs'] = record_start_epoch + record_duration_ms
+
+        params['actionUrl'] = event['variable_plivo_record_action_url']
         params['callbackUrl'] = event['variable_plivo_record_callbackUrl']
         params['callbackMethod'] = event['variable_plivo_record_callbackMethod']
         params['awsBucket'] = event['variable_plivo_record_awsBucket']
