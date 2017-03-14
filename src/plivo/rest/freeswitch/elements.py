@@ -1463,7 +1463,12 @@ class Record(Element):
         self.recordSession = self.extract_attribute_value("recordSession") == 'true'
         self.awsBucket = self.extract_attribute_value("awsBucket")
         self.awsRegion = self.extract_attribute_value("awsRegion")
-        
+        self.callbackUrl = self.extract_attribute_value("callbackUrl")
+        self.callbackMethod = self.extract_attribute_value("callbackMethod")
+
+        if not self.callbackMethod in ('GET', 'POST'):
+            raise RESTAttributeException("method must be 'GET' or 'POST'")
+
         self.action = self.extract_attribute_value("action")
         method = self.extract_attribute_value("method")
         if not method in ('GET', 'POST'):
