@@ -115,8 +115,8 @@ ELEMENTS_DEFAULT_PARAMS = {
                 'recordSession': 'false',
                 'callbackUrl': '',
                 'callbackMethod': 'POST',
-                'awsBucket': 'plivorecord',
-                'awsRegion': 'us-east-1',
+                'awsBucket': '',
+                'awsRegion': '',
         },
         'SIPTransfer': {
                 #url: SET IN ELEMENT BODY
@@ -1438,8 +1438,8 @@ class Record(Element):
         self.method = ''
         self.redirect = True
         self.startOnDialAnswer = False
-        self.awsBucket = 'plivorecord'
-        self.awsRegion = 'us-east-1'
+        self.awsBucket = ''
+        self.awsRegion = ''
         self.recordSession = False
         self.callbackUrl = ""
         self.callbackMethod = "POST"
@@ -1585,7 +1585,7 @@ class Record(Element):
                     
                 params['RecordingDurationMs'] = record_ms
                 params['RecordingStartMs'] = -1
-                params['RecordingStopMs'] = -1
+                params['RecordingEndMs'] = -1
                 
                 if not self.startOnDialAnswer:
                     try:
