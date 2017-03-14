@@ -882,7 +882,7 @@ class Dial(Element):
                              record_path)
             start_record_epoch = "api_on_answer_4='uuid_setvar %s plivo_recording_start %d" % (outbound_socket.get_channel_unique_id(), int(time.time()))
             
-            record_flag = "RECORD_STEREO=true,%s,%s,%s,%s,%s," % (start_record, stop_record_sched, stop_record, start_record_epoch)
+            record_flag = "RECORD_STEREO=true,%s,%s,%s,%s," % (start_record, stop_record_sched, stop_record, start_record_epoch)
             
         # Append time limit and group confirm to dial string
         self.dial_str = '<%s,%s%s%s>%s' % (ring_flag, record_flag, dial_time_limit, dial_confirm, self.dial_str)
