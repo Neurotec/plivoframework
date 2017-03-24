@@ -74,7 +74,7 @@ class CallRequest(object):
     def __init__(self, request_uuid, gateways,
                  answer_url, ring_url, hangup_url, 
                  to='', _from='', accountsid='',
-                 extra_dial_string=''):
+                 extra_dial_string='', ringTimeout = 120):
         self.request_uuid = request_uuid
         self.gateways = gateways
         self.answer_url = answer_url
@@ -216,7 +216,7 @@ class PlivoRestApi(object):
 
     def _prepare_call_request(self, caller_id, caller_name, to, extra_dial_string, gw, gw_codecs,
                                 gw_timeouts, gw_retries, send_digits, send_preanswer, time_limit,
-                                hangup_on_ring, answer_url, ring_url, hangup_url, accountsid='', record_on=None, record_path="", s3record_url=""):
+                                hangup_on_ring, answer_url, ring_url, hangup_url, accountsid='', record_on=None, record_path="", s3record_url="", ringTimeout = 120):
         gateways = []
         gw_retry_list = []
         gw_codec_list = []
@@ -239,6 +239,7 @@ class PlivoRestApi(object):
         # create a new request uuid
         request_uuid = str(uuid.uuid1())
         # append args
+        args_list.append("originate_timeout=%d" % ringTimeout)
         args_list.append("plivo_request_uuid=%s" % request_uuid)
         args_list.append("plivo_answer_url=%s" % answer_url)
         args_list.append("plivo_ring_url=%s" % ring_url)
@@ -545,6 +546,10 @@ class PlivoRestApi(object):
         Eg. 1w2w3@1000
 
         [SendOnPreanswer]: SendDigits on early media instead of answer.
+        
+        [RingTimeout]: Determines the time in seconds the call should ring. If the
+        call is not answered within the ring_timeout value or the default value of 120s, it
+        is canceled.
 
         [RecordOn]: Start recording on events: "answer".
         [RecordUrl]: Url to notify record finish.
@@ -592,7 +597,8 @@ class PlivoRestApi(object):
                 record_filename = get_post_param(request, 'RecordFileName')
                 record_fileformat = get_post_param(request, 'RecordFileFormat')
                 s3record_url = get_post_param(request, 'S3RecordUrl')
-
+                ringTimeout = get_post_param(request, 'RingTimeout')
+                
                 if not record_fileformat:
                     record_fileformat = "mp3"
                 if not record_fileformat in ("mp3", "wav"):
@@ -609,7 +615,7 @@ class PlivoRestApi(object):
                                     caller_id, caller_name, to, extra_dial_string,
                                     gw, gw_codecs, gw_timeouts, gw_retries,
                                     send_digits, send_preanswer, time_limit, hangup_on_ring,
-                                    answer_url, ring_url, hangup_url, accountsid, record_on, record_path, s3record_url)
+                                    answer_url, ring_url, hangup_url, accountsid, record_on, record_path, s3record_url, ringTimeout)
 
                 request_uuid = call_req.request_uuid
                 self._rest_inbound_socket.call_requests[request_uuid] = call_req
@@ -735,7 +741,7 @@ class PlivoRestApi(object):
                 hangup_on_ring_str = get_post_param(request, 'HangupOnRing')
                 caller_name_str = get_post_param(request, 'CallerName')
                 accountsid = get_post_param(request, 'AccountSID') or ''
-            
+                ringTimeout = get_post_param(request, 'RingTimeout') or 120
                 record_on = get_post_param(request, 'RecordOn')
                 record_filepath = get_post_param(request, 'RecordFilePath')
                 record_filename = get_post_param(request, 'RecordFileName')
@@ -810,7 +816,7 @@ class PlivoRestApi(object):
                                     caller_id, caller_name, to, extra_dial_string,
                                     gw_str_list[i], gw_codecs, gw_timeouts, gw_retries,
                                     send_digits, send_preanswer, time_limit, hangup_on_ring,
-                                    answer_url, ring_url, hangup_url, accountsid, record_on, record_path, s3record_url)
+                                    answer_url, ring_url, hangup_url, accountsid, record_on, record_path, s3record_url, ringTimeout)
                         request_uuid = call_req.request_uuid
                         request_uuid_list.append(request_uuid)
                         self._rest_inbound_socket.call_requests[request_uuid] = call_req
