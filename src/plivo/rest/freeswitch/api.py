@@ -932,6 +932,23 @@ class PlivoRestApi(object):
         return self.send_response(Success=result, Message=msg)
 
     @auth_protect
+    def hangup_conference(self):
+        result = True
+        room = get_post_param(request, 'ConferenceName')
+        if not room:
+            msg = "ConferenceName must be present"
+            result = False
+            return self.send_response(Success=result, Message=msg)
+
+        msg = "conference hung up"
+        res = self._rest_inbound_socket.conference_api(room, "hup all")
+        if res.is_success():
+            msg = "Conference Hung up Failed %s" % res.get_response()
+            result = False
+
+        return self.send_response(Success=result, Mesage=msg)
+    
+    @auth_protect
     def hangup_all_calls(self):
         self._rest_inbound_socket.log.debug("RESTAPI HangupAllCalls with %s" \
                                         % str(request.form.items()))

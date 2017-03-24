@@ -34,7 +34,7 @@ URLS = {
         '/' + PLIVO_VERSION + '/HangupCall/': (PlivoRestApi.hangup_call, ['POST']),
         # API to transfer a single call
         '/' + PLIVO_VERSION + '/TransferCall/': (PlivoRestApi.transfer_call, ['POST']),
-        '/' + PLIVO_VERSION + '/CancelRequest/': (PlivoRestApi.hangup_call_request, ['POST']),
+
         # API to hangup all calls
         '/' + PLIVO_VERSION + '/HangupAllCalls/': (PlivoRestApi.hangup_all_calls, ['POST']),
         # API to schedule hangup on a single call
@@ -83,4 +83,7 @@ URLS = {
         '/' + PLIVO_VERSION + '/ConferenceListMembers/': (PlivoRestApi.conference_list_members, ['POST']),
         # API to list all conferences with members
         '/' + PLIVO_VERSION + '/ConferenceList/': (PlivoRestApi.conference_list, ['POST']),
+        #CUSTOM
+        '/' + PLIVO_VERSION + '/CancelRequest/': (PlivoRestApi.hangup_call_request, ['POST']),
+        '/' + PLIVO_VERSION + '/HangupConference/': (PlivoRestApi.hangup_conference, ['POST']),
        }
