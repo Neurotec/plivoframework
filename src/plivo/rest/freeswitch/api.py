@@ -74,7 +74,7 @@ class CallRequest(object):
     def __init__(self, request_uuid, gateways,
                  answer_url, ring_url, hangup_url, 
                  to='', _from='', accountsid='',
-                 extra_dial_string='', ringTimeout = 120):
+                 extra_dial_string=''):
         self.request_uuid = request_uuid
         self.gateways = gateways
         self.answer_url = answer_url
