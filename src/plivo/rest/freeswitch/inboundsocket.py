@@ -837,6 +837,22 @@ class RESTInboundSocket(InboundEventSocket):
                         % (call_uuid, str(res.get_response())))
         return False
 
+    def cancel_request(self, request_uuid):
+        try:
+            call_req = self.call_requests[request_uuid]
+            if call_req.state_flag in ('Ringing', 'EarlyMedia'):
+                self.call_requests[request_uuid] = None
+                del self.call_requests[request_uuid]
+                cmd = "hupall NORMAL_CLEARING plivo_request_uuid %s" % request_uuid
+                res  = self.api(cmd)
+                if not res.is_success():
+                    self.log.error("Call Hangup Failed for RequestUUID %s -- %s" \
+                                   %(request_uuid, res.get_response()))
+                    return False
+        except KeyError:
+            return False
+        return True
+        
     def hangup_call(self, call_uuid="", request_uuid=""):
         if not call_uuid and not request_uuid:
             self.log.error("Call Hangup Failed -- Missing CallUUID or RequestUUID")

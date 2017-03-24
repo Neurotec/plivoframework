@@ -834,6 +834,23 @@ class PlivoRestApi(object):
                              RequestUUID=request_uuid_list)
 
     @auth_protect
+    def hangup_call_request(self):
+        """Hangup call request
+        """
+        result = False
+        request_uuid = get_post_param(request, 'RequestUUID')
+        if not request_uuid:
+            msg = "RequestUUID Parameter must be present"
+            return self.send_response(Success=result, Message=msg)
+        res = self._rest_inbound_socket.cancel_request(request_uuid)
+        if res:
+            msg = "CancelRequest Executed"
+            result = True
+        else:
+            msg = "CancelRequest Failed"
+        return self.send_response(Success=result, Message=msg)
+    
+    @auth_protect
     def hangup_call(self):
         """Hangup Call
         Realtime call hangup allows you to interrupt an in-progress
