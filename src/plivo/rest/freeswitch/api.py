@@ -331,7 +331,11 @@ class PlivoRestApi(object):
             for i in range(retry):
                 gateway = Gateway(request_uuid, to, gw, codecs, timeout)
                 gateways.append(gateway)
-
+                
+        if to.startswith("sip:") and len(gateways) == 0:
+            gateway = Gateway(request_uuid, to, "", '', timeout)
+            gateways.append(gateway)
+            
         call_req = CallRequest(request_uuid, gateways, answer_url, ring_url, hangup_url, 
                                to=to, _from=caller_id, accountsid=accountsid,
                                extra_dial_string=args_str)

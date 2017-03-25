@@ -203,6 +203,9 @@ class PlivoRestServer(PlivoRestApi):
             self.default_s3record_url = config.get('common', 'DEFAULT_S3RECORD_URL', default='')
             
             self.default_http_method = config.get('common', 'DEFAULT_HTTP_METHOD', default='')
+
+            self.default_freeswitch_profile = config.get('common', 'DEFAULT_FREESWITCH_PROFILE', default='internal')
+            
             if not self.default_http_method in ('GET', 'POST'):
                 self.default_http_method = 'POST'
 

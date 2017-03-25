@@ -689,6 +689,10 @@ class RESTInboundSocket(InboundEventSocket):
                         pass
                     return
 
+                # Set default profile for SIP call
+                if gw.to.startswith("sip:") and gw.gw == "":
+                    gw.gw = "sofia/%s/" % self.get_server().default_freeswitch_profile
+                    
                 _options = []
                 # Set plivo app flag
                 _options.append("plivo_app=true")
