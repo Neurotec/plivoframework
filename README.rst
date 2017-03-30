@@ -26,6 +26,27 @@ Se agregan los siguientes atributos:
   * *startOnDialAnswer* : iniciar grabacion al contestar
     
 
+/Call
+~~~~~~~~~~~
+
+  * *ringTimeout*: en segundos
+
+/CancelRequest
+metodo: POST
+
+  * *RequestUUID* : UUID
+
+/Request/<request_uuid>
+~~~~~~~~~~~~~
+
+Cancela llamada antes de ser contestada
+
+/HangupConference
+
+metodo: POST
+
+   * *ConferenceName* : nombre de conferencia
+  
 License
 ~~~~~~~~
 

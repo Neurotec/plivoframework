@@ -35,7 +35,13 @@ def auth_protect(decorated_func):
     wrapper.__doc__ = decorated_func.__doc__
     return wrapper
 
-
+def auth_protect_request_uuid(decorated_func):
+    def wrapper(obj, request_uuid):
+        if obj._validate_http_auth() and obj._validate_ip_auth():
+            return decorated_func(obj, request_uuid)
+    wrapper.__name__ = decorated_func.__name__
+    wrapper.__doc__ = decorated_func.__doc__
+    return wrapper
 
 class Gateway(object):
     __slots__ = ('__weakref__',
@@ -239,7 +245,7 @@ class PlivoRestApi(object):
         # create a new request uuid
         request_uuid = str(uuid.uuid1())
         # append args
-        args_list.append("originate_timeout=%d" % ringTimeout)
+        args_list.append("originate_timeout=%s" % ringTimeout)
         args_list.append("plivo_request_uuid=%s" % request_uuid)
         args_list.append("plivo_answer_url=%s" % answer_url)
         args_list.append("plivo_ring_url=%s" % ring_url)
@@ -853,7 +859,23 @@ class PlivoRestApi(object):
         else:
             msg = "CancelRequest Failed"
         return self.send_response(Success=result, Message=msg)
-    
+
+    @auth_protect_request_uuid
+    def cancel_request(self, request_uuid):
+        """Hangup call request
+        """
+        result = False
+        if not request_uuid:
+            msg = "RequestUUID Parameter must be present %s" % request_uuid
+            return self.send_response(Success=result, Message=msg)
+        res = self._rest_inbound_socket.cancel_request(request_uuid)
+        if res:
+            msg = "CancelRequest Executed"
+            result = True
+        else:
+            msg = "CancelRequest Failed"
+        return self.send_response(Success=result, Message=msg)
+
     @auth_protect
     def hangup_call(self):
         """Hangup Call
@@ -946,11 +968,11 @@ class PlivoRestApi(object):
 
         msg = "conference hung up"
         res = self._rest_inbound_socket.conference_api(room, "hup all")
-        if res.is_success():
+        if not res:
             msg = "Conference Hung up Failed %s" % res.get_response()
             result = False
 
-        return self.send_response(Success=result, Mesage=msg)
+        return self.send_response(Success=result, Message=msg)
     
     @auth_protect
     def hangup_all_calls(self):

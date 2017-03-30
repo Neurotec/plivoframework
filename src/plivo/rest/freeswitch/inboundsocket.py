@@ -700,8 +700,9 @@ class RESTInboundSocket(InboundEventSocket):
                 if gw.codecs:
                     _options.append("absolute_codec_string=%s" % gw.codecs)
                 # Add timeout option
-                if gw.timeout:
-                    _options.append("originate_timeout=%s" % gw.timeout)
+                #@todo remove for controlling with ringTimeout
+                #if gw.timeout:
+                #    _options.append("originate_timeout=%s" % gw.timeout)
                 # Set early media
                 _options.append("ignore_early_media=true")
                 # Build originate dial string
@@ -718,10 +719,12 @@ class RESTInboundSocket(InboundEventSocket):
                 bg_api_response = self.bgapi(dial_str)
                 job_uuid = bg_api_response.get_job_uuid()
                 self.bk_jobs[job_uuid] = request_uuid
+
                 if not job_uuid:
                     self.log.error("Call Failed for RequestUUID %s -- JobUUID not received" \
                                                                     % request_uuid)
                     continue
+                
                 # wait for current call attempt to finish
                 self.log.debug("Waiting Call attempt for RequestUUID %s ..." % request_uuid)
                 success = call_req.wait_call_attempt()
@@ -843,17 +846,31 @@ class RESTInboundSocket(InboundEventSocket):
 
     def cancel_request(self, request_uuid):
         try:
+            self.log.info("Cancel Request for RequestUUID %s" % request_uuid)
             call_req = self.call_requests[request_uuid]
+
+            self.log.info("Cancel Request state %s" % call_req.state_flag)
+            force_hangup = False
+            if call_req.state_flag == None:
+                force_hangup = False
+                call_req.wait_call_attempt()
+            
             if call_req.state_flag in ('Ringing', 'EarlyMedia'):
+                force_hangup = True
+                
+            if force_hangup:
                 self.call_requests[request_uuid] = None
                 del self.call_requests[request_uuid]
                 cmd = "hupall NORMAL_CLEARING plivo_request_uuid %s" % request_uuid
+                self.log.debug("CancelRequest cmd: %s" % cmd)
                 res  = self.api(cmd)
                 if not res.is_success():
                     self.log.error("Call Hangup Failed for RequestUUID %s -- %s" \
                                    %(request_uuid, res.get_response()))
                     return False
-        except KeyError:
+                self.log.info("CancelRequest complete for RequestUUID %s" % request_uuid)
+        except (KeyError, AttributeError):
+            self.log.error("CancelRequest not found call with RequestUUID %s" % request_uuid)
             return False
         return True
         

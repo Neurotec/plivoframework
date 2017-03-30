@@ -66,7 +66,7 @@ class PlivoRestServer(PlivoRestApi):
         for path, func_desc in urls.URLS.iteritems():
             func, methods = func_desc
             fn = getattr(self, func.__name__)
-            self.app.add_url_rule(path, func.__name__, fn, methods=methods)
+            self.app.add_url_rule(path, func.__name__, fn,  methods=methods)
         # create WSGI Server
         if self._ssl and self._ssl_cert and helpers.file_exists(self._ssl_cert):
             self._wsgi_mode = PyWSGIServer

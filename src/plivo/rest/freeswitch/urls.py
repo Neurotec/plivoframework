@@ -85,5 +85,6 @@ URLS = {
         '/' + PLIVO_VERSION + '/ConferenceList/': (PlivoRestApi.conference_list, ['POST']),
         #CUSTOM
         '/' + PLIVO_VERSION + '/CancelRequest/': (PlivoRestApi.hangup_call_request, ['POST']),
+        '/' + PLIVO_VERSION + '/Request/<request_uuid>': (PlivoRestApi.cancel_request, ['DELETE']),
         '/' + PLIVO_VERSION + '/HangupConference/': (PlivoRestApi.hangup_conference, ['POST']),
        }
