@@ -690,7 +690,7 @@ class RESTInboundSocket(InboundEventSocket):
                     return
 
                 # Set default profile for SIP call
-                if gw.to.startswith("sip:") and gw.gw == "":
+                if gw.to.startswith("sip:"):
                     gw.gw = "sofia/%s/" % self.get_server().default_freeswitch_profile
                     
                 _options = []
