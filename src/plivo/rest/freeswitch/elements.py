@@ -1571,9 +1571,9 @@ class Record(Element):
                 try:
                     record_ms = event.get_header('variable_record_ms')
                     if not record_ms:
-                        record_ms = "-1"
+                        record_ms = -1
                     else:
-                        record_ms = str(int(record_ms)) # check if integer
+                        record_ms = int(record_ms) # check if integer
                 except (ValueError, TypeError):
                     outbound_socket.log.warn("Invalid 'record_ms' : '%s'" % str(record_ms))
                     record_ms = -1
