@@ -254,6 +254,7 @@ class Conference(Element):
           (default 0, no timeLimit)
     hangupOnStar: exit conference when member press '*'
           (default false)
+    record: true/false default false
     recordFilePath: path where recording is saved.
         (default "" so recording wont happen)
     recordFileFormat: file format in which recording tis saved
@@ -287,9 +288,12 @@ class Conference(Element):
         self.enter_sound = ''
         self.exit_sound = ''
         self.hangup_on_star = False
+        self.record = False
         self.record_file_path = ""
         self.record_file_format = "mp3"
         self.record_filename = ""
+        self.awsBucket = ''
+        self.awsRegion =''
         self.action = ''
         self.method = ''
         self.callback_url = ''
@@ -338,6 +342,10 @@ class Conference(Element):
         if self.record_file_path:
             self.record_file_path = os.path.normpath(self.record_file_path)\
                                                                     + os.sep
+        self.record = self.extract_attribute_value('record') == 'true'
+        self.awsBucket = self.extract_attribute_value('awsBucket')
+        self.awsRegion = self.extract_attribute_value('awsRegion')
+        
         self.record_file_format = \
                             self.extract_attribute_value("recordFileFormat")
         if self.record_file_format not in ('wav', 'mp3'):
@@ -432,6 +440,16 @@ class Conference(Element):
         params['ConferenceAction'] = 'floor'
         spawn_raw(outboundsocket.send_to_url, self.callback_url, params, self.callback_method)
 
+    def _notify_record(self, outboundsocket, event, record_file):
+        if not self.callback_url or not self.conf_id:
+            return
+        outboundsocket.log.debug('Record Event Conference Detected')
+        params = {}
+        params['ConferenceName'] = self.room
+        params['ConferenceUUID'] = self.conf_id or ''
+        params['ConferenceAction'] = 'record'
+        record_aws_url = "http://%s.s3.amazonaws.com/%s" % (self.awsBucket, os.path.basename(record_file))
+        
     def execute(self, outbound_socket):
         flags = []
         # settings for conference room
@@ -452,7 +470,16 @@ class Conference(Element):
                                         self.record_file_format)
         else:
             record_file = None
-
+            
+        if self.record and record_file == None:
+            if self.record_filename:
+                filename = self.record_filename
+            else:
+                filename = "%s_%s" % (datetime.now().strftime("%Y%m%d-%H%M%S"),
+                                      outbound_socket.get_channel_unique_id())
+            file_path = "/tmp" #TODO ubicar ruta por defecto
+            record_file = "%s%s.%s" % (file_path, filename, self.record_file_format)
+            
         # set moh sound
         mohs = self._prepare_moh(outbound_socket)
         if mohs:
@@ -497,6 +524,15 @@ class Conference(Element):
         # really enter conference room
         outbound_socket.log.info("Entering Conference: Room %s (flags %s)" \
                                         % (self.room, flags_opt))
+
+        #record
+        if self.record:
+            outbound_socket.set('conference_record_awsBucket=%s' % self.awsBucket)
+            outbound_socket.set('conference_record_awsRegion=%s' % self.awsRegion)
+            outbound_socket.set('conference_record_callbackUrl="%s"' % self.callback_url)
+            outbound_socket.set('conference_record_callbackMethod=%s' % self.callback_method)
+            #s3record_url from s3record_default
+            
         res = outbound_socket.conference(self.full_room, lock=False)
         if not res.is_success():
             outbound_socket.log.error("Conference: Entering Room %s Failed" \
@@ -559,7 +595,8 @@ class Conference(Element):
                         outbound_socket.bgapi("conference %s play tone_stream://L=2;%%(300,200,700) async" % self.room)
 
                 # record conference if set
-                if record_file:
+                # this start recording on first member of conference
+                if self.record and record_file:
                     outbound_socket.bgapi("conference %s record %s" % (self.room, record_file))
                     outbound_socket.log.info("Conference: Room %s, recording to file %s" \
                                     % (self.room, record_file))

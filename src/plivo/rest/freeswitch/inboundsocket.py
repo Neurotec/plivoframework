@@ -87,21 +87,35 @@ class RESTInboundSocket(InboundEventSocket):
     def on_custom(self, event):
         if event['Event-Subclass'] == 'conference::maintenance' \
             and event['Action'] == 'stop-recording':
-            if not self.get_server().record_url:
+            if not self.get_server().default_s3record_url:
+                self.log.warn("Conference::Record not found S3RECORD_URL")
                 return
+            self.log.debug("Conference Event %s" % str(event))
             # special case to manage record files
             rpath = event['Path']
             # if filename is empty or 'all', skip upload
             if not rpath or rpath == 'all':
                 return
+
+            #maps to expected attributes for notify s3record
+            awsBucket = event['variable_conference_record_awsBucket']
+            awsRegion = event['variable_conference_record_awsRegion']
+            callbackUrl = event['variable_conference_record_callbackUrl']
+            callbackMethod = event['variable_conference_record_callbackMethod']
+            event['variable_plivo_record_path'] = rpath
+            event['variable_plivo_record_callbackUrl'] = callbackUrl
+            event['variable_plivo_record_callbackMethod'] = callbackMethod
+            event['variable_plivo_record_awsBucket'] = awsBucket
+            event['variable_plivo_record_awsRegion'] = awsRegion
+            
             # get room name
-            room = event["Conference-Name"]
-            rms = event['variable_record_seconds'] or ''
-            params = {'ConferenceName': room,
-                      'RecordFile': rpath,
-                      'RecordDuration': rms}
+            params = {}
+            params['ConferenceUUID'] = event['Conference-Unique-ID'] or ''
+            params['ConferenceName'] = event['Conference-Name'] or ''
+            params['ConferenceAction'] = 'record'
+            
             self.log.info("Conference Record Stop event %s"  % str(params))
-            self.send_to_url(self.get_server().record_url, params)
+            self.notify_to_service_s3record(event, event['Unique-ID'], params)
 
     def on_background_job(self, event):
         """
@@ -600,8 +614,7 @@ class RESTInboundSocket(InboundEventSocket):
             params['CallStatus'] = 'completed'
             spawn_raw(self.send_to_url, hangup_url, params)
 
-    def notify_to_service_s3record(self, event, call_uuid):
-        params = {}
+    def notify_to_service_s3record(self, event, call_uuid, params = {}):
         # add extra params
         params = self.get_extra_fs_vars(event)
         record_file = event['variable_plivo_record_path']

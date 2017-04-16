@@ -258,7 +258,7 @@ class PlivoOutboundEventSocket(OutboundEventSocket):
                 and event['Unique-ID'] == self.get_channel_unique_id() \
                 and event['Speak'] == 'true':
                 self._action_queue.put(event)
-
+            
         # case dial event
         elif self.current_element == 'Dial':
             if event['Event-Subclass'] == 'plivo::dial' \
