@@ -1568,6 +1568,7 @@ class Record(Element):
                                    record_file)
                             )
             outbound_socket.log.info("Record/Session Both Executed")
+
         else:
             if self.play_beep and (self.recordSession == False and self.startOnDialAnswer == False):
                 beep = 'tone_stream://%(300,200,700)'
@@ -1612,7 +1613,9 @@ class Record(Element):
                     else:
                         record_ms = int(record_ms) # check if integer
                 except (ValueError, TypeError):
-                    outbound_socket.log.warn("Invalid 'record_ms' : '%s'" % str(record_ms))
+                    outbound_socket.log.warn("Invalid 'record_ms' %s'" % str(record_ms))
+                    record_ms = -1
+                except (UnboundLocalError):
                     record_ms = -1
 
                 if record_ms > 0:
@@ -1629,13 +1632,16 @@ class Record(Element):
                         record_start_epoch = int(event.get_header('variable_plivo_recording_start'))
                     except (ValueError, TypeError):
                         record_start_epoch = -1
+                    except (UnboundLocalError):
+                        record_start_epoch = 0
+                        
                     if record_start_epoch > 0:
                         params['RecordingStartMs'] = record_start_epoch
                         params['RecordingEndMs'] = record_start_epoch + record_ms
-                        
-                if event:
+
+                try:
                     record_digits = event.get_header("variable_playback_terminator_used")
-                else:
+                except (UnboundLocalError, ValueError, TypeError):
                     record_digits = None
                     
                 if record_digits:
