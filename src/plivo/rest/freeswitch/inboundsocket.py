@@ -103,22 +103,22 @@ class RESTInboundSocket(InboundEventSocket):
             #maps to expected attributes for notify s3record
             res = self.api("hash select/%s/record_awsBucket/" % krealm).get_body()
             if res != 'None':
-                event['variable_plivo_awsBucket'] = res.get_response()
+                event['variable_plivo_awsBucket'] = res
             self.bgapi("hash delete/%s/record_awsBucket/" % krealm)
                 
             res = self.api("hash select/%s/record_awsRegion/" % krealm).get_body()
             if res != 'None':
-                event['variable_plivo_awsRegion'] = res.get_response()
+                event['variable_plivo_awsRegion'] = res
             self.bgapi("hash delete/%s/record_awsRegion/" % krealm)
                 
             res = self.api("hash select/%s/record_callbackUrl/" % krealm).get_body()
             if res != 'None':
-                event['variable_plivo_record_callbackUrl'] = res.get_response()
+                event['variable_plivo_record_callbackUrl'] = res
             self.bgapi("hash delete/%s/record_callbackUrl/" % krealm)
                 
             res = self.api("hash select/%s/record_callbackMethod/" % krealm).get_body()
             if res != 'None':
-                event['variable_plivo_record_callbackMethod'] = res.get_response()
+                event['variable_plivo_record_callbackMethod'] = res
             self.bgapi("hash delete/%s/record_callbackMethod" % krealm)
                 
 
