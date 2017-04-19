@@ -662,7 +662,7 @@ class RESTInboundSocket(InboundEventSocket):
             return
         params['RecordFile'] = event['variable_plivo_record_path']
         params['RecordingStartMs'] = -1
-        params['RecordingStopMs'] = -1
+        params['RecordingEndMs'] = -1
         try:
             record_duration_ms = int(event['variable_record_ms'])
         except (ValueError, TypeError):
