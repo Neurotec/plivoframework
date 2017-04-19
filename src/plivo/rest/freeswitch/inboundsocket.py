@@ -97,16 +97,33 @@ class RESTInboundSocket(InboundEventSocket):
             if not rpath or rpath == 'all':
                 return
 
+            krealm = "conference-%s" % event['Conference-Unique-ID']
+            self.log.debug("Conference Record Realm Map %s" % krealm)
+            
             #maps to expected attributes for notify s3record
-            awsBucket = event['variable_conference_record_awsBucket']
-            awsRegion = event['variable_conference_record_awsRegion']
-            callbackUrl = event['variable_conference_record_callbackUrl']
-            callbackMethod = event['variable_conference_record_callbackMethod']
+            res = self.api("hash select/%s/record_awsBucket/" % krealm)
+            if res.is_success():
+                event['variable_plivo_awsBucket'] = res.get_response()
+                self.bgapi("hash delete/%s/record_awsBucket/" % krealm)
+                
+            res = self.api("hash select/%s/record_awsRegion/" % krealm)
+            if res.is_success():
+                event['variable_plivo_awsRegion'] = res.get_response()
+                self.bgapi("hash delete/%s/record_awsRegion/" % krealm)
+                
+            res = self.api("hash select/%s/record_callbackUrl/" % krealm)
+            if res.is_success():
+                event['variable_plivo_record_callbackUrl'] = res.get_response()
+                self.log.debug("Conference Record detect callbackUrl %s" % res.get_response())
+                self.bgapi("hash delete/%s/record_callbackUrl/" % krealm)
+                
+            res = self.api("hash select/%s/record_callbackMethod/" % krealm)
+            if res.is_success():
+                event['variable_plivo_record_callbackMethod'] = res.get_response()
+                self.bgapi("hash delete/%s/record_callbackMethod" % krealm)
+                
+
             event['variable_plivo_record_path'] = rpath
-            event['variable_plivo_record_callbackUrl'] = callbackUrl
-            event['variable_plivo_record_callbackMethod'] = callbackMethod
-            event['variable_plivo_record_awsBucket'] = awsBucket
-            event['variable_plivo_record_awsRegion'] = awsRegion
             
             # get room name
             params = {}
