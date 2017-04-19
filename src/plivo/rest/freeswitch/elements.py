@@ -42,6 +42,9 @@ ELEMENTS_DEFAULT_PARAMS = {
                 'exitSound': '',
                 'timeLimit': 0 ,
                 'hangupOnStar': 'false',
+                'record': 'false',
+                'callbackUrl': '',
+                'callbackMethod': 'POST',
                 'recordFilePath': '',
                 'recordFileFormat': 'mp3',
                 'recordFileName': '',
@@ -526,6 +529,7 @@ class Conference(Element):
 
         #record
         if self.record:
+            outbound_socket.log.info("Conference: Record hash registering...")
             krealm = "conference-%s" % event['Conference-Unique-ID']
             outbound_socket.api("hash insert/%s/record_awsBucket/%s" % (krealm, self.awsBucket))
             outbound_socket.api("hash insert/%s/record_awsRegion/%s" % (krealm, self.awsRegion))
