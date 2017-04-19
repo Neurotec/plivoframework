@@ -101,14 +101,19 @@ class RESTInboundSocket(InboundEventSocket):
             self.log.debug("Conference Record Realm Map %s" % krealm)
             
             #maps to expected attributes for notify s3record
+            event['variable_plivo_record_awsBucket'] = ''
+            event['variable_plivo_record_awsRegion'] = ''
+            event['variable_plivo_record_callbackUrl'] = ''
+            event['variable_plivo_record_callbackMethod'] = ''
+            
             res = self.api("hash select/%s/record_awsBucket/" % krealm).get_body()
             if res != 'None':
-                event['variable_plivo_awsBucket'] = res
+                event['variable_plivo_record_awsBucket'] = res
             self.bgapi("hash delete/%s/record_awsBucket/" % krealm)
                 
             res = self.api("hash select/%s/record_awsRegion/" % krealm).get_body()
             if res != 'None':
-                event['variable_plivo_awsRegion'] = res
+                event['variable_plivo_record_awsRegion'] = res
             self.bgapi("hash delete/%s/record_awsRegion/" % krealm)
                 
             res = self.api("hash select/%s/record_callbackUrl/" % krealm).get_body()
@@ -123,13 +128,15 @@ class RESTInboundSocket(InboundEventSocket):
                 
 
             event['variable_plivo_record_path'] = rpath
+
             
             # get room name
             params = {}
             params['ConferenceUUID'] = event['Conference-Unique-ID'] or ''
             params['ConferenceName'] = event['Conference-Name'] or ''
             params['ConferenceAction'] = 'record'
-            
+            # conference::maintenance event no send record_ms just Milli
+            event['variable_record_ms'] = event['Milliseconds-Elapsed']
             self.log.info("Conference Record Stop event %s"  % str(params))
             self.notify_to_service_s3record(event, event['Unique-ID'], params)
 
