@@ -101,26 +101,25 @@ class RESTInboundSocket(InboundEventSocket):
             self.log.debug("Conference Record Realm Map %s" % krealm)
             
             #maps to expected attributes for notify s3record
-            res = self.api("hash select/%s/record_awsBucket/" % krealm)
-            if res.is_success():
+            res = self.api("hash select/%s/record_awsBucket/" % krealm).get_body()
+            if res != 'None':
                 event['variable_plivo_awsBucket'] = res.get_response()
-                self.bgapi("hash delete/%s/record_awsBucket/" % krealm)
+            self.bgapi("hash delete/%s/record_awsBucket/" % krealm)
                 
-            res = self.api("hash select/%s/record_awsRegion/" % krealm)
-            if res.is_success():
+            res = self.api("hash select/%s/record_awsRegion/" % krealm).get_body()
+            if res != 'None':
                 event['variable_plivo_awsRegion'] = res.get_response()
-                self.bgapi("hash delete/%s/record_awsRegion/" % krealm)
+            self.bgapi("hash delete/%s/record_awsRegion/" % krealm)
                 
-            res = self.api("hash select/%s/record_callbackUrl/" % krealm)
-            if res.is_success():
+            res = self.api("hash select/%s/record_callbackUrl/" % krealm).get_body()
+            if res != 'None':
                 event['variable_plivo_record_callbackUrl'] = res.get_response()
-                self.log.debug("Conference Record detect callbackUrl %s" % res.get_response())
-                self.bgapi("hash delete/%s/record_callbackUrl/" % krealm)
+            self.bgapi("hash delete/%s/record_callbackUrl/" % krealm)
                 
-            res = self.api("hash select/%s/record_callbackMethod/" % krealm)
-            if res.is_success():
+            res = self.api("hash select/%s/record_callbackMethod/" % krealm).get_body()
+            if res != 'None':
                 event['variable_plivo_record_callbackMethod'] = res.get_response()
-                self.bgapi("hash delete/%s/record_callbackMethod" % krealm)
+            self.bgapi("hash delete/%s/record_callbackMethod" % krealm)
                 
 
             event['variable_plivo_record_path'] = rpath
