@@ -4,7 +4,7 @@
 
 import os
 import os.path
-from datetime import datetime, timezone, timedelta
+from datetime import datetime
 import re
 import uuid
 import time
@@ -536,12 +536,8 @@ class Conference(Element):
             outbound_socket.api("hash insert/%s/record_callbackUrl/%s" % (krealm, self.callback_url))
             outbound_socket.api("hash insert/%s/record_callbackMethod/%s" % (krealm, self.callback_method))
             
-
-            now = datetime.now(timezone.utc)
-            epoch = datetime(1970, 1, 1, tzinfo=timezone.utc) # use POSIX epoch
-            posix_timestamp_micros = (now - epoch) // timedelta(microseconds=1)
-            posix_timestamp_millis = posix_timestamp_micros // 1000 # or `/ 1e3` for float
-            outbound_socket.api("hash insert/%s/record_startms/%s" % (krealm, str(posix_timestamp_millis)))
+            millis = int(round(time.time() * 1000))
+            outbound_socket.api("hash insert/%s/record_startms/%d" % (krealm, millis))
             #s3record_url from s3record_default
 
         # if event is add-member, get Member-ID
