@@ -125,8 +125,14 @@ class RESTInboundSocket(InboundEventSocket):
             if res != 'None':
                 event['variable_plivo_record_callbackMethod'] = res
             self.bgapi("hash delete/%s/record_callbackMethod" % krealm)
-                
 
+
+            event['variable_plivo_recording_start'] = ''
+            res = self.api("hash select/%s/record_startms/" % krealm).get_body()
+            if res != 'None':
+                event['variable_plivo_recording_start'] = res
+            self.bgapi("hash delete/%s/record_startms" % krealm)
+                
             event['variable_plivo_record_path'] = rpath
 
             
