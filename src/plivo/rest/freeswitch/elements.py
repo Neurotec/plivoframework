@@ -537,13 +537,10 @@ class Conference(Element):
             outbound_socket.api("hash insert/%s/record_callbackMethod/%s" % (krealm, self.callback_method))
             
 
-            from datetime import datetime, timezone, timedelta
-            
             now = datetime.now(timezone.utc)
             epoch = datetime(1970, 1, 1, tzinfo=timezone.utc) # use POSIX epoch
             posix_timestamp_micros = (now - epoch) // timedelta(microseconds=1)
             posix_timestamp_millis = posix_timestamp_micros // 1000 # or `/ 1e3` for float
-            
             outbound_socket.api("hash insert/%s/record_startms/%s" % (krealm, str(posix_timestamp_millis)))
             #s3record_url from s3record_default
 
