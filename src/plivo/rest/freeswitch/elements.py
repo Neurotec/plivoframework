@@ -535,7 +535,7 @@ class Conference(Element):
             outbound_socket.api("hash insert/%s/record_awsRegion/%s" % (krealm, self.awsRegion))
             outbound_socket.api("hash insert/%s/record_callbackUrl/%s" % (krealm, self.callback_url))
             outbound_socket.api("hash insert/%s/record_callbackMethod/%s" % (krealm, self.callback_method))
-            
+            outbound_socket.api("hash insert/%s/record_actionUrl/%s" % (krealm, self.action))
             millis = int(round(time.time() * 1000))
             outbound_socket.api("hash insert/%s/record_startms/%d" % (krealm, millis))
             #s3record_url from s3record_default

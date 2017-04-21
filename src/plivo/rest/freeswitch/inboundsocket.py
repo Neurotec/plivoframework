@@ -100,11 +100,17 @@ class RESTInboundSocket(InboundEventSocket):
             self.log.debug("Conference Record Realm Map %s" % krealm)
             
             #maps to expected attributes for notify s3record
+            event['variable_privo_record_action_url'] = ''
             event['variable_plivo_record_awsBucket'] = ''
             event['variable_plivo_record_awsRegion'] = ''
             event['variable_plivo_record_callbackUrl'] = ''
             event['variable_plivo_record_callbackMethod'] = ''
-            
+
+            res = self.api("hash select/%s/record_actionUrl/" % krealm).get_body()
+            if res != 'None':
+                event['variable_plivo_record_action_url'] = res
+            self.bgapi("hash delete/%s/record_actionUrl/" % krealm)
+
             res = self.api("hash select/%s/record_awsBucket/" % krealm).get_body()
             if res != 'None':
                 event['variable_plivo_record_awsBucket'] = res
