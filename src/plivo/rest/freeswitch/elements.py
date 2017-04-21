@@ -620,6 +620,7 @@ class Conference(Element):
             # notify channel has left room
             self._notify_exit_conf(outbound_socket)
             outbound_socket.log.info("Leaving Conference: Room %s" % self.room)
+            
 
             # If action is set, redirect to this url
             # Otherwise, continue to next Element
@@ -629,7 +630,9 @@ class Conference(Element):
                 params['ConferenceUUID'] = self.conf_id or ''
                 params['ConferenceMemberID'] = self.member_id or ''
                 if record_file:
-                    params['RecordFile'] = record_file
+                    record_aws_url = "http://%s.s3.amazonaws.com/%s" % (self.awsBucket, os.path.basename(record_file))
+                    params['RecordUrl'] = record_aws_url
+                    
                 self.fetch_rest_xml(self.action, params, method=self.method)
 
 
