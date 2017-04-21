@@ -42,6 +42,9 @@ ELEMENTS_DEFAULT_PARAMS = {
                 'exitSound': '',
                 'timeLimit': 0 ,
                 'hangupOnStar': 'false',
+                'record': 'false',
+                'callbackUrl': '',
+                'callbackMethod': 'POST',
                 'recordFilePath': '',
                 'recordFileFormat': 'mp3',
                 'recordFileName': '',
@@ -440,16 +443,6 @@ class Conference(Element):
         params['ConferenceAction'] = 'floor'
         spawn_raw(outboundsocket.send_to_url, self.callback_url, params, self.callback_method)
 
-    def _notify_record(self, outboundsocket, event, record_file):
-        if not self.callback_url or not self.conf_id:
-            return
-        outboundsocket.log.debug('Record Event Conference Detected')
-        params = {}
-        params['ConferenceName'] = self.room
-        params['ConferenceUUID'] = self.conf_id or ''
-        params['ConferenceAction'] = 'record'
-        record_aws_url = "http://%s.s3.amazonaws.com/%s" % (self.awsBucket, os.path.basename(record_file))
-        
     def execute(self, outbound_socket):
         flags = []
         # settings for conference room
@@ -525,13 +518,6 @@ class Conference(Element):
         outbound_socket.log.info("Entering Conference: Room %s (flags %s)" \
                                         % (self.room, flags_opt))
 
-        #record
-        if self.record:
-            outbound_socket.set('conference_record_awsBucket=%s' % self.awsBucket)
-            outbound_socket.set('conference_record_awsRegion=%s' % self.awsRegion)
-            outbound_socket.set('conference_record_callbackUrl="%s"' % self.callback_url)
-            outbound_socket.set('conference_record_callbackMethod=%s' % self.callback_method)
-            #s3record_url from s3record_default
             
         res = outbound_socket.conference(self.full_room, lock=False)
         if not res.is_success():
@@ -540,6 +526,19 @@ class Conference(Element):
             return
         # get next event
         event = outbound_socket.wait_for_action()
+
+        #record
+        if self.record:
+            outbound_socket.log.info("Conference: Record hash registering...")
+            krealm = "conference-%s" % event['Conference-Unique-ID']
+            outbound_socket.api("hash insert/%s/record_awsBucket/%s" % (krealm, self.awsBucket))
+            outbound_socket.api("hash insert/%s/record_awsRegion/%s" % (krealm, self.awsRegion))
+            outbound_socket.api("hash insert/%s/record_callbackUrl/%s" % (krealm, self.callback_url))
+            outbound_socket.api("hash insert/%s/record_callbackMethod/%s" % (krealm, self.callback_method))
+            
+            millis = int(round(time.time() * 1000))
+            outbound_socket.api("hash insert/%s/record_startms/%d" % (krealm, millis))
+            #s3record_url from s3record_default
 
         # if event is add-member, get Member-ID
         # and set extra features for conference
@@ -1658,11 +1657,12 @@ class Record(Element):
                     params['Digits'] = record_digits
                 else:
                     params['Digits'] = ""
-            # fetch xml
-            if self.redirect:
-                self.fetch_rest_xml(self.action, params, method=self.method)
-            else:
-                spawn_raw(outbound_socket.send_to_url, self.action, params, method=self.method)
+                    
+                # fetch xml
+                if self.redirect:
+                    self.fetch_rest_xml(self.action, params, method=self.method)
+                else:
+                    spawn_raw(outbound_socket.send_to_url, self.action, params, method=self.method)
 
 
 class SIPTransfer(Element):

@@ -96,23 +96,52 @@ class RESTInboundSocket(InboundEventSocket):
             if not rpath or rpath == 'all':
                 return
 
+            krealm = "conference-%s" % event['Conference-Unique-ID']
+            self.log.debug("Conference Record Realm Map %s" % krealm)
+            
             #maps to expected attributes for notify s3record
-            awsBucket = event['variable_conference_record_awsBucket']
-            awsRegion = event['variable_conference_record_awsRegion']
-            callbackUrl = event['variable_conference_record_callbackUrl']
-            callbackMethod = event['variable_conference_record_callbackMethod']
+            event['variable_plivo_record_awsBucket'] = ''
+            event['variable_plivo_record_awsRegion'] = ''
+            event['variable_plivo_record_callbackUrl'] = ''
+            event['variable_plivo_record_callbackMethod'] = ''
+            
+            res = self.api("hash select/%s/record_awsBucket/" % krealm).get_body()
+            if res != 'None':
+                event['variable_plivo_record_awsBucket'] = res
+            self.bgapi("hash delete/%s/record_awsBucket/" % krealm)
+                
+            res = self.api("hash select/%s/record_awsRegion/" % krealm).get_body()
+            if res != 'None':
+                event['variable_plivo_record_awsRegion'] = res
+            self.bgapi("hash delete/%s/record_awsRegion/" % krealm)
+                
+            res = self.api("hash select/%s/record_callbackUrl/" % krealm).get_body()
+            if res != 'None':
+                event['variable_plivo_record_callbackUrl'] = res
+            self.bgapi("hash delete/%s/record_callbackUrl/" % krealm)
+                
+            res = self.api("hash select/%s/record_callbackMethod/" % krealm).get_body()
+            if res != 'None':
+                event['variable_plivo_record_callbackMethod'] = res
+            self.bgapi("hash delete/%s/record_callbackMethod" % krealm)
+
+
+            event['variable_plivo_recording_start'] = ''
+            res = self.api("hash select/%s/record_startms/" % krealm).get_body()
+            if res != 'None':
+                event['variable_plivo_recording_start'] = res
+            self.bgapi("hash delete/%s/record_startms" % krealm)
+                
             event['variable_plivo_record_path'] = rpath
-            event['variable_plivo_record_callbackUrl'] = callbackUrl
-            event['variable_plivo_record_callbackMethod'] = callbackMethod
-            event['variable_plivo_record_awsBucket'] = awsBucket
-            event['variable_plivo_record_awsRegion'] = awsRegion
+
             
             # get room name
             params = {}
             params['ConferenceUUID'] = event['Conference-Unique-ID'] or ''
             params['ConferenceName'] = event['Conference-Name'] or ''
             params['ConferenceAction'] = 'record'
-            
+            # conference::maintenance event no send record_ms just Milli
+            event['variable_record_ms'] = event['Milliseconds-Elapsed']
             self.log.info("Conference Record Stop event %s"  % str(params))
             self.notify_to_service_s3record(event, event['Unique-ID'], params)
 
@@ -632,7 +661,7 @@ class RESTInboundSocket(InboundEventSocket):
             return
         params['RecordFile'] = event['variable_plivo_record_path']
         params['RecordingStartMs'] = -1
-        params['RecordingStopMs'] = -1
+        params['RecordingEndMs'] = -1
         try:
             record_duration_ms = int(event['variable_record_ms'])
         except (ValueError, TypeError):
