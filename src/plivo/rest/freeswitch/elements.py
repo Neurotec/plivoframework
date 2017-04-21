@@ -1541,14 +1541,20 @@ class Record(Element):
         #implementacion plivo.com
         outbound_socket.set("plivo_record_awsBucket='%s'" % self.awsBucket)
         outbound_socket.set("plivo_record_awsRegion='%s'" % self.awsRegion)
-        outbound_socket.set("plivo_record_callbackUrl='%s'" % self.callbackUrl)
+        
+        # force to notify s3record when hangup call
+        if self.callbackUrl == None or self.callbackUrl == "":
+            outbound_socket.set("plivo_record_callbackUrl='%s'" % self.action)
+        else:
+            outbound_socket.set("plivo_record_callbackUrl='%s'" % self.callbackUrl)
         outbound_socket.set("plivo_record_callbackMethod=%s" % self.callbackMethod)
         outbound_socket.set("plivo_record_path='%s'" % record_file)
         if self.action:
             outbound_socket.set("plivo_record_action_url='%s'" % self.action)
         else:
             outbound_socket.set("plivo_record_action_url=''")
-            
+
+
         if self.startOnDialAnswer:
             outbound_socket.session_params['recordDialPath'] = record_file
             outbound_socket.session_params['recordDialMaxLength'] = self.max_length
@@ -1570,6 +1576,7 @@ class Record(Element):
             outbound_socket.log.info("Record/Session Both Executed")
 
         else:
+                
             if self.play_beep and (self.recordSession == False and self.startOnDialAnswer == False):
                 beep = 'tone_stream://%(300,200,700)'
                 outbound_socket.playback(beep)
