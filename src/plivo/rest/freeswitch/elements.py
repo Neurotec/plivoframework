@@ -115,8 +115,8 @@ ELEMENTS_DEFAULT_PARAMS = {
                 'recordSession': 'false',
                 'callbackUrl': '',
                 'callbackMethod': 'POST',
-                'awsBucket': '',
-                'awsRegion': '',
+                'awsBucket': 'plivo',
+                'awsRegion': 'us-east-1',
         },
         'SIPTransfer': {
                 #url: SET IN ELEMENT BODY
@@ -292,8 +292,8 @@ class Conference(Element):
         self.record_file_path = ""
         self.record_file_format = "mp3"
         self.record_filename = ""
-        self.awsBucket = ''
-        self.awsRegion =''
+        self.awsBucket = 'plivo'
+        self.awsRegion ='us-east-1'
         self.action = ''
         self.method = ''
         self.callback_url = ''
@@ -343,8 +343,8 @@ class Conference(Element):
             self.record_file_path = os.path.normpath(self.record_file_path)\
                                                                     + os.sep
         self.record = self.extract_attribute_value('record') == 'true'
-        self.awsBucket = self.extract_attribute_value('awsBucket')
-        self.awsRegion = self.extract_attribute_value('awsRegion')
+        self.awsBucket = self.extract_attribute_value('awsBucket', default='plivo')
+        self.awsRegion = self.extract_attribute_value('awsRegion', default='us-east-1')
         
         self.record_file_format = \
                             self.extract_attribute_value("recordFileFormat")
@@ -1475,8 +1475,8 @@ class Record(Element):
         self.method = ''
         self.redirect = True
         self.startOnDialAnswer = False
-        self.awsBucket = ''
-        self.awsRegion = ''
+        self.awsBucket = 'plivo'
+        self.awsRegion = 'us-east-1'
         self.recordSession = False
         self.callbackUrl = ""
         self.callbackMethod = "POST"
@@ -1498,8 +1498,8 @@ class Record(Element):
         self.redirect = self.extract_attribute_value("redirect") == 'true'
         self.startOnDialAnswer = self.extract_attribute_value("startOnDialAnswer") == 'true'
         self.recordSession = self.extract_attribute_value("recordSession") == 'true'
-        self.awsBucket = self.extract_attribute_value("awsBucket")
-        self.awsRegion = self.extract_attribute_value("awsRegion")
+        self.awsBucket = self.extract_attribute_value("awsBucket", default='plivo')
+        self.awsRegion = self.extract_attribute_value("awsRegion", default='us-east-1')
         self.callbackUrl = self.extract_attribute_value("callbackUrl")
         self.callbackMethod = self.extract_attribute_value("callbackMethod")
 

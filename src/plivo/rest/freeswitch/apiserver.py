@@ -205,7 +205,9 @@ class PlivoRestServer(PlivoRestApi):
             self.default_http_method = config.get('common', 'DEFAULT_HTTP_METHOD', default='')
 
             self.default_freeswitch_profile = config.get('common', 'DEFAULT_FREESWITCH_PROFILE', default='internal')
-            
+            self.default_awsbucket = config.get('common', 'DEFAULT_AWSBUCKET', default='general')
+            self.default_awsregion = config.get('common', 'DEFAULT_AWSREGION', default='east-1')
+
             if not self.default_http_method in ('GET', 'POST'):
                 self.default_http_method = 'POST'
 
