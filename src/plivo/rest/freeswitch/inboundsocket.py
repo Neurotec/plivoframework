@@ -57,8 +57,7 @@ class RESTInboundSocket(InboundEventSocket):
         self.log = self.server.log
         self.cache = self.server.get_cache()
 
-    def get_extra_fs_vars(self, event):
-        params = {}
+    def get_extra_fs_vars(self, event, params = {}):
         if not event or not self.get_server().extra_fs_vars:
             return params
         for var in self.get_server().extra_fs_vars.split(','):
@@ -616,7 +615,7 @@ class RESTInboundSocket(InboundEventSocket):
 
     def notify_to_service_s3record(self, event, call_uuid, params = {}):
         # add extra params
-        params = self.get_extra_fs_vars(event)
+        params = self.get_extra_fs_vars(event, params)
         record_file = event['variable_plivo_record_path']
         record_url = event['variable_plivo_s3record_url']
 
