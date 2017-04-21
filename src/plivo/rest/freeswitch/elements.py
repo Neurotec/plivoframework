@@ -29,6 +29,9 @@ from plivo.rest.freeswitch.exceptions import RESTFormatException, \
                                             RESTHangup
 
 
+DEFAULT_AWSBUCKET = 'testneurotec'
+DEFAULT_AWSREGION = 'us-east-1'
+
 ELEMENTS_DEFAULT_PARAMS = {
         'Conference': {
                 #'room': SET IN ELEMENT BODY
@@ -118,8 +121,8 @@ ELEMENTS_DEFAULT_PARAMS = {
                 'recordSession': 'false',
                 'callbackUrl': '',
                 'callbackMethod': 'POST',
-                'awsBucket': 'plivo',
-                'awsRegion': 'us-east-1',
+                'awsBucket': DEFAULT_AWSBUCKET,
+                'awsRegion': DEFAULT_AWSREGION,
         },
         'SIPTransfer': {
                 #url: SET IN ELEMENT BODY
@@ -153,7 +156,6 @@ ELEMENTS_DEFAULT_PARAMS = {
 
 
 MAX_LOOPS = 10000
-
 
 class Element(object):
     """Abstract Element Class to be inherited by all other elements"""
@@ -295,8 +297,8 @@ class Conference(Element):
         self.record_file_path = ""
         self.record_file_format = "mp3"
         self.record_filename = ""
-        self.awsBucket = 'plivo'
-        self.awsRegion ='us-east-1'
+        self.awsBucket = DEFAULT_AWSBUCKET
+        self.awsRegion = DEFAULT_AWSREGION
         self.action = ''
         self.method = ''
         self.callback_url = ''
@@ -346,8 +348,8 @@ class Conference(Element):
             self.record_file_path = os.path.normpath(self.record_file_path)\
                                                                     + os.sep
         self.record = self.extract_attribute_value('record') == 'true'
-        self.awsBucket = self.extract_attribute_value('awsBucket', default='plivo')
-        self.awsRegion = self.extract_attribute_value('awsRegion', default='us-east-1')
+        self.awsBucket = self.extract_attribute_value('awsBucket', default=DEFAULT_AWSBUCKET)
+        self.awsRegion = self.extract_attribute_value('awsRegion', default=DEFAULT_AWSREGION)
         
         self.record_file_format = \
                             self.extract_attribute_value("recordFileFormat")
@@ -1477,8 +1479,8 @@ class Record(Element):
         self.method = ''
         self.redirect = True
         self.startOnDialAnswer = False
-        self.awsBucket = 'plivo'
-        self.awsRegion = 'us-east-1'
+        self.awsBucket = DEFAULT_AWSBUCKET
+        self.awsRegion = DEFAULT_AWSREGION
         self.recordSession = False
         self.callbackUrl = ""
         self.callbackMethod = "POST"
@@ -1500,8 +1502,8 @@ class Record(Element):
         self.redirect = self.extract_attribute_value("redirect") == 'true'
         self.startOnDialAnswer = self.extract_attribute_value("startOnDialAnswer") == 'true'
         self.recordSession = self.extract_attribute_value("recordSession") == 'true'
-        self.awsBucket = self.extract_attribute_value("awsBucket", default='plivo')
-        self.awsRegion = self.extract_attribute_value("awsRegion", default='us-east-1')
+        self.awsBucket = self.extract_attribute_value("awsBucket", default=DEFAULT_AWSBUCKET)
+        self.awsRegion = self.extract_attribute_value("awsRegion", default=DEFAULT_AWSREGION)
         self.callbackUrl = self.extract_attribute_value("callbackUrl")
         self.callbackMethod = self.extract_attribute_value("callbackMethod")
 
