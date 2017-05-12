@@ -5,8 +5,8 @@
 # Copyright (c) 2011 Plivo Team. See LICENSE for details.
 
 
-PLIVO_GIT_REPO=git://github.com/plivo/plivoframework.git
-PLIVO_SETUP_SCRIPT=https://raw.github.com/plivo/plivoframework/master/scripts/ez_setup.py
+PLIVO_GIT_REPO=git://repo.neurotec.co/LEADGOGO/plivoframework
+PLIVO_SETUP_SCRIPT=https://repo.neurotec.co/LEADGOGO/plivoframework/raw/master/scripts/plivo_install.sh
 
 
 BRANCH=$2
@@ -185,7 +185,7 @@ source $REAL_PATH/bin/activate
 
 # force installation of gevent 1.03a
 pip uninstall gevent
-pip install -Iv http://gevent.googlecode.com/files/gevent-1.0a3.tar.gz
+pip install gevent==1.1.0
 pip install -e git+${PLIVO_GIT_REPO}@${BRANCH}#egg=plivo
 
 
@@ -249,20 +249,20 @@ $REAL_PATH/bin/plivo-postinstall &>/dev/null
 case $DIST in
     "DEBIAN")
         cp -f $REAL_PATH/bin/plivo /etc/init.d/plivo
-        cp -f $REAL_PATH/bin/cacheserver /etc/init.d/plivocache
+        #cp -f $REAL_PATH/bin/cacheserver /etc/init.d/plivocache
         sed -i "s#/usr/local/plivo#$REAL_PATH#g" /etc/init.d/plivo
-        sed -i "s#/usr/local/plivo#$REAL_PATH#g" /etc/init.d/plivocache
+        #sed -i "s#/usr/local/plivo#$REAL_PATH#g" /etc/init.d/plivocache
         cd /etc/rc2.d
-        ln -s /etc/init.d/plivocache S99plivocache
+        #ln -s /etc/init.d/plivocache S99plivocache
         ln -s /etc/init.d/plivo S99plivo
     ;;
     "CENTOS")
         cp -f $REAL_PATH/src/plivo/src/initscripts/centos/plivo /etc/init.d/plivo
-        cp -f $REAL_PATH/src/plivo/src/initscripts/centos/plivocache /etc/init.d/plivocache
+        #cp -f $REAL_PATH/src/plivo/src/initscripts/centos/plivocache /etc/init.d/plivocache
         sed -i "s#/usr/local/plivo#$REAL_PATH#g" /etc/init.d/plivo
-        sed -i "s#/usr/local/plivo#$REAL_PATH#g" /etc/init.d/plivocache
+        #sed -i "s#/usr/local/plivo#$REAL_PATH#g" /etc/init.d/plivocache
         chkconfig --add plivo
-        chkconfig --add plivocache
+        #chkconfig --add plivocache
     ;;
 esac
 
