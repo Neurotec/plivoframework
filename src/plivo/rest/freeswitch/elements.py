@@ -27,7 +27,7 @@ from plivo.rest.freeswitch.exceptions import RESTFormatException, \
                                             RESTSIPTransferException, \
                                             RESTNoExecuteException, \
                                             RESTHangup
-
+import plivo.utils.hash
 
 DEFAULT_AWSBUCKET = 'testneurotec'
 DEFAULT_AWSREGION = 'us-east-1'
@@ -533,13 +533,18 @@ class Conference(Element):
         if self.record:
             outbound_socket.log.info("Conference: Record hash registering...")
             krealm = "conference-%s" % event['Conference-Unique-ID']
-            outbound_socket.api("hash insert/%s/record_awsBucket/%s" % (krealm, self.awsBucket))
-            outbound_socket.api("hash insert/%s/record_awsRegion/%s" % (krealm, self.awsRegion))
-            outbound_socket.api("hash insert/%s/record_callbackUrl/%s" % (krealm, self.callback_url))
-            outbound_socket.api("hash insert/%s/record_callbackMethod/%s" % (krealm, self.callback_method))
-            outbound_socket.api("hash insert/%s/record_actionUrl/%s" % (krealm, self.action))
-            millis = int(round(time.time() * 1000))
-            outbound_socket.api("hash insert/%s/record_startms/%d" % (krealm, millis))
+            
+            items = [
+                ('record_awsBucket', krealm, self.awsBucket),
+                ('record_awsRegion', krealm, self.awsRegion),
+                ('record_callbackUrl', krealm, self.callback_url),
+                ('record_callbackMethod', krealm, self.callback_method)
+                ('record_actionUrl', krealm, self.action),
+                ('record_startms', krealm, int(round(time.time() * 1000)))
+            ]
+            for item in items:
+                ctx, key, value = item
+                plivo.utils.hash.insert(outbound_socket, ctx, key, value)
 
         # if event is add-member, get Member-ID
         # and set extra features for conference

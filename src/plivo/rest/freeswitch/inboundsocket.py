@@ -23,6 +23,7 @@ from plivo.rest.freeswitch.helpers import HTTPRequest, get_substring, \
                                         is_valid_sound_proto
 
 from plivo.worker.s3record import record_upload
+import plivo.utils.hash
 
 EVENT_FILTER = "BACKGROUND_JOB CHANNEL_PROGRESS CHANNEL_PROGRESS_MEDIA CHANNEL_HANGUP_COMPLETE CHANNEL_STATE SESSION_HEARTBEAT CALL_UPDATE RECORD_STOP CUSTOM conference::maintenance"
 
@@ -98,48 +99,14 @@ class RESTInboundSocket(InboundEventSocket):
             self.log.debug("Conference Record Realm Map %s" % krealm)
             
             #maps to expected attributes for notify s3record
-            event['variable_privo_record_action_url'] = ''
-            event['variable_plivo_record_awsBucket'] = ''
-            event['variable_plivo_record_awsRegion'] = ''
-            event['variable_plivo_record_callbackUrl'] = ''
-            event['variable_plivo_record_callbackMethod'] = ''
-
-            res = self.api("hash select/%s/record_actionUrl/" % krealm).get_body()
-            if res != 'None':
-                event['variable_plivo_record_action_url'] = res
-            self.bgapi("hash delete/%s/record_actionUrl/" % krealm)
-
-            res = self.api("hash select/%s/record_awsBucket/" % krealm).get_body()
-            if res != 'None':
-                event['variable_plivo_record_awsBucket'] = res
-            self.bgapi("hash delete/%s/record_awsBucket/" % krealm)
-                
-            res = self.api("hash select/%s/record_awsRegion/" % krealm).get_body()
-            if res != 'None':
-                event['variable_plivo_record_awsRegion'] = res
-            self.bgapi("hash delete/%s/record_awsRegion/" % krealm)
-                
-            res = self.api("hash select/%s/record_callbackUrl/" % krealm).get_body()
-            if res != 'None':
-                event['variable_plivo_record_callbackUrl'] = res
-            self.bgapi("hash delete/%s/record_callbackUrl/" % krealm)
-                
-            res = self.api("hash select/%s/record_callbackMethod/" % krealm).get_body()
-            if res != 'None':
-                event['variable_plivo_record_callbackMethod'] = res
-            self.bgapi("hash delete/%s/record_callbackMethod" % krealm)
-
-
-            event['variable_plivo_recording_start'] = ''
-            res = self.api("hash select/%s/record_startms/" % krealm).get_body()
-            if res != 'None':
-                event['variable_plivo_recording_start'] = res
-            self.bgapi("hash delete/%s/record_startms" % krealm)
-                
+            event['variable_plivo_record_action_url'] = plivo.utils.hash.select(self, 'record_actionUrl', krealm)
+            event['variable_plivo_record_awsBucket']  = plivo.utils.hash.select(self, 'record_awsBucket', krealm)
+            event['variable_plivo_record_awsRegion'] =  plivo.utils.hash.select(self, 'record_awsRegion', krealm)
+            event['variable_plivo_record_callbackUrl'] = plivo.utils.hash.select(self, 'record_callbackUrl', krealm)
+            event['variable_plivo_record_callbackMethod'] = plivo.utils.hash.select(self, 'record_callbackMethod', krealm)
+            event['variable_plivo_recording_start'] = plivo.utils.hash.select(self, 'record_startms', krealm)
             event['variable_plivo_record_path'] = rpath
 
-            
-            # get room name
             params = {}
             params['ConferenceUUID'] = event['Conference-Unique-ID'] or ''
             params['ConferenceName'] = event['Conference-Name'] or ''
