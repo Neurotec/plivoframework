@@ -22,6 +22,7 @@ from plivo.rest.freeswitch.helpers import HTTPRequest, get_substring, \
                                         get_resource, \
                                         is_valid_sound_proto
 
+from plivo.worker.s3record import record_upload
 
 EVENT_FILTER = "BACKGROUND_JOB CHANNEL_PROGRESS CHANNEL_PROGRESS_MEDIA CHANNEL_HANGUP_COMPLETE CHANNEL_STATE SESSION_HEARTBEAT CALL_UPDATE RECORD_STOP CUSTOM conference::maintenance"
 
@@ -86,9 +87,6 @@ class RESTInboundSocket(InboundEventSocket):
     def on_custom(self, event):
         if event['Event-Subclass'] == 'conference::maintenance' \
             and event['Action'] == 'stop-recording':
-            if not self.get_server().default_s3record_url:
-                self.log.warn("Conference::Record not found S3RECORD_URL")
-                return
             self.log.debug("Conference Event %s" % str(event))
             # special case to manage record files
             rpath = event['Path']
@@ -654,18 +652,7 @@ class RESTInboundSocket(InboundEventSocket):
         record_file = event['variable_plivo_record_path']
         record_url = event['variable_plivo_s3record_url']
 
-        if record_url:
-            self.log.debug("Using S3RecordUrl for CallUUID %s" \
-                           % call_uuid)
-        else:
-            if self.get_server().default_s3record_url:
-                record_url = self.get_server().default_s3record_url
-                self.log.debug("Using S3RecordUrl from DefaultS3RecordUrl for CallUUID %s" \
-                               % call_uuid)
-        if not record_url:
-            self.log.debug("No S3RecordUrl for incoming callUUID %s" % call_uuid)
-            return
-        params['RecordFile'] = event['variable_plivo_record_path']
+        params['RecordFile'] = record_file
         params['RecordingStartMs'] = -1
         params['RecordingEndMs'] = -1
         try:
@@ -689,10 +676,19 @@ class RESTInboundSocket(InboundEventSocket):
         params['actionUrl'] = event['variable_plivo_record_action_url']
         params['callbackUrl'] = event['variable_plivo_record_callbackUrl']
         params['callbackMethod'] = event['variable_plivo_record_callbackMethod']
-        params['awsBucket'] = event['variable_plivo_record_awsBucket']
-        params['awsRegion'] = event['variable_plivo_record_awsRegion']
+        
+        bucket = event['variable_plivo_record_awsBucket']
+        if not bucket:
+            self.get_server().default_awsbucket
+            
+        region = event['variable_plivo_record_awsRegion']
+        if not region:
+            self.get_server().default_awsregion
 
-        spawn_raw(self.send_to_url, record_url, params)
+        accesskey = self.get_server().default_s3_access_key
+        secretkey  = self.get_server().default_s3_secret_key
+        record_upload.delay(accesskey, secretkey, bucket, region, params)
+
         
     def send_to_url(self, url=None, params={}, method=None):
         if method is None:

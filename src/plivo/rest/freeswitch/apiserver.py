@@ -200,13 +200,14 @@ class PlivoRestServer(PlivoRestApi):
 
             self.default_hangup_url = config.get('common', 'DEFAULT_HANGUP_URL', default='')
             
-            self.default_s3record_url = config.get('common', 'DEFAULT_S3RECORD_URL', default='')
-            
             self.default_http_method = config.get('common', 'DEFAULT_HTTP_METHOD', default='')
 
             self.default_freeswitch_profile = config.get('common', 'DEFAULT_FREESWITCH_PROFILE', default='internal')
-            self.default_awsbucket = config.get('common', 'DEFAULT_AWSBUCKET', default='general')
-            self.default_awsregion = config.get('common', 'DEFAULT_AWSREGION', default='east-1')
+            
+            self.default_awsbucket = config.get('uploader', 'DEFAULT_AWSBUCKET', default='general')
+            self.default_awsregion = config.get('uploader', 'DEFAULT_AWSREGION', default='east-1')
+            self.default_s3_access_key = config.get('uploader', 'S3_ACCESS_KEY', default='')
+            self.default_s3_secret_key = config.get('uploader', 'S3_SECRET_KEY', default='')
 
             if not self.default_http_method in ('GET', 'POST'):
                 self.default_http_method = 'POST'

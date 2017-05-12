@@ -31,6 +31,14 @@ def postinstall():
     f = open(prefix + '/bin/wavstream.sh', 'w')
     f.write(new_buff)
     f.close()
+    #set uploader
+    f = open(prefix + '/bin/plivo-uploader', 'r')
+    buff = f.read()
+    f.close()
+    new_buff = buff.replace('@PREFIX@', prefix)
+    f = open(prefix + '/bin/plivo-uploader', 'w')
+    f.write(new_buff)
+    f.close()
     # set wavdump script
     f = open(prefix + '/bin/wavdump.py', 'r')
     buff = f.read()

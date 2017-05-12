@@ -540,7 +540,6 @@ class Conference(Element):
             outbound_socket.api("hash insert/%s/record_actionUrl/%s" % (krealm, self.action))
             millis = int(round(time.time() * 1000))
             outbound_socket.api("hash insert/%s/record_startms/%d" % (krealm, millis))
-            #s3record_url from s3record_default
 
         # if event is add-member, get Member-ID
         # and set extra features for conference

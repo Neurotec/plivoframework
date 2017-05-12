@@ -222,7 +222,7 @@ class PlivoRestApi(object):
 
     def _prepare_call_request(self, caller_id, caller_name, to, extra_dial_string, gw, gw_codecs,
                                 gw_timeouts, gw_retries, send_digits, send_preanswer, time_limit,
-                                hangup_on_ring, answer_url, ring_url, hangup_url, accountsid='', record_on=None, record_path="", s3record_url="", ringTimeout = 120):
+                                hangup_on_ring, answer_url, ring_url, hangup_url, accountsid='', record_on=None, record_path="", ringTimeout = 120):
         gateways = []
         gw_retry_list = []
         gw_codec_list = []
@@ -259,7 +259,6 @@ class PlivoRestApi(object):
              args_list.append(extra_dial_string)
 
         if record_on and record_on == 'answer':
-            args_list.append("plivo_s3record_url=%s" % s3record_url)
             args_list.append("plivo_record_on=%s" % record_on)
             args_list.append("plivo_record_path=%s" % record_path)
             args_list.append("media_bug_answer_req=true")
@@ -606,7 +605,6 @@ class PlivoRestApi(object):
                 record_filepath = get_post_param(request, 'RecordFilePath')
                 record_filename = get_post_param(request, 'RecordFileName')
                 record_fileformat = get_post_param(request, 'RecordFileFormat')
-                s3record_url = get_post_param(request, 'S3RecordUrl')
                 ringTimeout = get_post_param(request, 'RingTimeout')
                 
                 if not record_fileformat:
@@ -625,7 +623,7 @@ class PlivoRestApi(object):
                                     caller_id, caller_name, to, extra_dial_string,
                                     gw, gw_codecs, gw_timeouts, gw_retries,
                                     send_digits, send_preanswer, time_limit, hangup_on_ring,
-                                    answer_url, ring_url, hangup_url, accountsid, record_on, record_path, s3record_url, ringTimeout)
+                                    answer_url, ring_url, hangup_url, accountsid, record_on, record_path, ringTimeout)
 
                 request_uuid = call_req.request_uuid
                 self._rest_inbound_socket.call_requests[request_uuid] = call_req
@@ -756,7 +754,6 @@ class PlivoRestApi(object):
                 record_filepath = get_post_param(request, 'RecordFilePath')
                 record_filename = get_post_param(request, 'RecordFileName')
                 record_fileformat = get_post_param(request, 'RecordFileFormat')
-                s3record_url = get_post_param(request, 'S3RecordUrl')
                 
                 if not record_fileformat:
                     record_fileformat = "mp3"
@@ -826,7 +823,7 @@ class PlivoRestApi(object):
                                     caller_id, caller_name, to, extra_dial_string,
                                     gw_str_list[i], gw_codecs, gw_timeouts, gw_retries,
                                     send_digits, send_preanswer, time_limit, hangup_on_ring,
-                                    answer_url, ring_url, hangup_url, accountsid, record_on, record_path, s3record_url, ringTimeout)
+                                    answer_url, ring_url, hangup_url, accountsid, record_on, record_path, ringTimeout)
                         request_uuid = call_req.request_uuid
                         request_uuid_list.append(request_uuid)
                         self._rest_inbound_socket.call_requests[request_uuid] = call_req

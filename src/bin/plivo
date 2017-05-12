@@ -41,10 +41,12 @@ do_start()
 	[ -f $PRE_SCRIPT ] && source $PRE_SCRIPT
 	rest_already_running="false"
 	outbound_already_running="false"
+        uploader_already_running="false"
 	$VENV_OFF &>/dev/null
 	source $VENV_ON
 	rest_pidfile=$PID_PREFIX/rest-$NAME.pid
 	outbound_pidfile=$PID_PREFIX/outbound-$NAME.pid
+        uploader_pidfile=$PID_PREFIX/uploader-$NAME.pid
 	kill -0 $(cat $rest_pidfile 2>/dev/null) 2>/dev/null
 	if [ $? -eq 0 ]; then
 		echo "$REST_NAME already running"
@@ -59,7 +61,15 @@ do_start()
 	else
 		$NICE --adjustment=-10 $OUTBOUND_SERVER -d -c $CONFIG_FILE -p $outbound_pidfile
 	fi
-	if [ "$rest_already_running" = "true" ] && [ "$outbound_already_running" = "true" ]; then
+        kill -0 $(cat $uploader_pidfile 2>/dev/null) 2>/dev/null
+        if [ $? -eq 0 ]; then
+            echo "$UPLOADER_NAME already running"
+            uploader_already_running="true"
+        else
+            $NICE --adjustment=-10 $UPLOADER_SERVER --pidfile=$uploader_pidfile
+        fi
+
+	if [ "$rest_already_running" = "true" ] && [ "$outbound_already_running" = "true" ] && [ "$uploader_already_running" = "true" ]; then
 		$VENV_OFF &>/dev/null
 		exit 0
 	fi
@@ -71,6 +81,10 @@ do_start()
 	if [ "$outbound_already_running" = "false" ]; then
 		kill -0 $(cat $outbound_pidfile 2>/dev/null) 2>/dev/null \
 			&& echo "$OUTBOUND_NAME started" || echo "$OUTBOUND_NAME start failed"
+	fi
+        if [ "$uploader_already_running" = "false" ]; then
+            kill -0 $(cat $outbound_pidfile 2>/dev/null) 2>/dev/null \
+		&& echo "$UPLOADER_NAME started" || echo "$UPLOADER_NAME start failed"
 	fi
 	$VENV_OFF &>/dev/null
 }
@@ -94,6 +108,13 @@ do_stop()
 	else
 		echo "$OUTBOUND_NAME stopping failed"
 	fi
+        kill -TERM $(cat $uploader_pidfile 2>/dev/null) 2>/dev/null
+	if [ $? -eq 0 ]; then
+		echo "$UPLOADER_NAME stopped"
+		rm -f $outbound_pidfile
+	else
+		echo "$UPLOADER_NAME stopping failed"
+	fi
 }
 
 do_reload()
@@ -112,6 +133,12 @@ do_reload()
 	else
 		echo "$OUTBOUND_NAME reload failed"
 	fi
+        kill -HUP $(cat $uploader_pidfile 2>/dev/null) 2>/dev/null
+	if [ $? -eq 0 ]; then
+		echo "$UPLOADER_NAME reloaded"
+	else
+		echo "$UPLOADER_NAME reload failed"
+	fi
 }
 
 
@@ -122,7 +149,9 @@ do_status()
 	kill -0 $(cat $rest_pidfile 2>/dev/null) 2>/dev/null \
 		&& echo "$REST_NAME running" || echo "$REST_NAME not running"
 	kill -0 $(cat $outbound_pidfile 2>/dev/null) 2>/dev/null \
-		&& echo "$OUTBOUND_NAME running" || echo "$OUTBOUND_NAME not running"
+	    && echo "$OUTBOUND_NAME running" || echo "$OUTBOUND_NAME not running"
+        kill -0 $(cat $uploader_pidfile 2>/dev/null) 2>/dev/null \
+	    && echo "$UPLOADER_NAME running" || echo "$UPLOADER_NAME not running"
 }
 
 
@@ -158,6 +187,7 @@ do
 	NAME=$(basename $CONFIG_FILE .conf)
 	REST_NAME="Plivo-Rest [$NAME]"
 	OUTBOUND_NAME="Plivo-Outbound [$NAME]"
+        UPLOADER_NAME="Plivo-Uploader [$NAME]"
 
 	case $1 in
 	start)
