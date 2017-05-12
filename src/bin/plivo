@@ -67,7 +67,7 @@ do_start()
             echo "$UPLOADER_NAME already running"
             uploader_already_running="true"
         else
-            $NICE --adjustment=-10 $UPLOADER_SERVER --pidfile=$uploader_pidfile
+            $NICE --adjustment=-10 $UPLOADER_SERVER -D --pidfile=$uploader_pidfile -D
         fi
 
 	if [ "$rest_already_running" = "true" ] && [ "$outbound_already_running" = "true" ] && [ "$uploader_already_running" = "true" ]; then
@@ -84,7 +84,7 @@ do_start()
 			&& echo "$OUTBOUND_NAME started" || echo "$OUTBOUND_NAME start failed"
 	fi
         if [ "$uploader_already_running" = "false" ]; then
-            kill -0 $(cat $outbound_pidfile 2>/dev/null) 2>/dev/null \
+            kill -0 $(cat $uploader_pidfile 2>/dev/null) 2>/dev/null \
 		&& echo "$UPLOADER_NAME started" || echo "$UPLOADER_NAME start failed"
 	fi
 	$VENV_OFF &>/dev/null
@@ -95,6 +95,7 @@ do_stop()
 {
 	rest_pidfile=$PID_PREFIX/rest-$NAME.pid
 	outbound_pidfile=$PID_PREFIX/outbound-$NAME.pid
+        uploader_pidfile=$PID_PREFIX/uploader-$NAME.pid
 	kill -TERM $(cat $rest_pidfile 2>/dev/null) 2>/dev/null
 	if [ $? -eq 0 ]; then
 		echo "$REST_NAME stopped"
@@ -112,7 +113,7 @@ do_stop()
         kill -TERM $(cat $uploader_pidfile 2>/dev/null) 2>/dev/null
 	if [ $? -eq 0 ]; then
 		echo "$UPLOADER_NAME stopped"
-		rm -f $outbound_pidfile
+		rm -f $uploader_pidfile
 	else
 		echo "$UPLOADER_NAME stopping failed"
 	fi
@@ -122,6 +123,7 @@ do_reload()
 {
 	rest_pidfile=$PID_PREFIX/rest-$NAME.pid
 	outbound_pidfile=$PID_PREFIX/outbound-$NAME.pid
+        uploader_file=$PID_PREFIX/uploader-$NAME.pid
 	kill -HUP $(cat $rest_pidfile 2>/dev/null) 2>/dev/null
 	if [ $? -eq 0 ]; then
 		echo "$REST_NAME reloaded"
@@ -147,6 +149,7 @@ do_status()
 {
 	rest_pidfile=$PID_PREFIX/rest-$NAME.pid
 	outbound_pidfile=$PID_PREFIX/outbound-$NAME.pid
+        uploader_file=$PID_PREFIX/uploader-$NAME.pid
 	kill -0 $(cat $rest_pidfile 2>/dev/null) 2>/dev/null \
 		&& echo "$REST_NAME running" || echo "$REST_NAME not running"
 	kill -0 $(cat $outbound_pidfile 2>/dev/null) 2>/dev/null \
