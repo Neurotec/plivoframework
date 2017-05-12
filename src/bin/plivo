@@ -21,6 +21,7 @@ VENV_ON=$PREFIX/bin/activate
 VENV_OFF=deactivate
 REST_SERVER=$EXEC_PREFIX/plivo-rest
 OUTBOUND_SERVER=$EXEC_PREFIX/plivo-outbound
+UPLOADER_SERVER=$EXEC_PREFIX/plivo-uploader
 PRE_SCRIPT=$EXEC_PREFIX/etc/plivo/env.sh
 #####################################################
 

@@ -33,6 +33,7 @@ setup_args = {
                  'src/bin/plivo-outbound',
                  'src/bin/plivo-cache',
                  'src/bin/plivo-postinstall',
+                 'src/bin/plivo-uploader',
                  'src/bin/wavdump.py',
                  'src/bin/wavstream.sh',
                  'src/bin/cacheserver',

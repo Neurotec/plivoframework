@@ -5,7 +5,7 @@
 # Copyright (c) 2011 Plivo Team. See LICENSE for details.
 
 
-PLIVO_GIT_REPO=git://repo.neurotec.co/LEADGOGO/plivoframework
+PLIVO_GIT_REPO=https://repo.neurotec.co/LEADGOGO/plivoframework
 PLIVO_SETUP_SCRIPT=https://repo.neurotec.co/LEADGOGO/plivoframework/raw/master/scripts/plivo_install.sh
 
 
@@ -78,7 +78,7 @@ case $DIST in
     'DEBIAN')
         DEBIAN_VERSION=$(cat /etc/debian_version |cut -d'.' -f1)
         apt-get -y update
-        apt-get -y install autoconf automake autotools-dev binutils bison build-essential cpp curl flex g++ gcc git-core libaudiofile-dev libc6-dev libdb-dev libexpat1 libgdbm-dev libgnutls-dev libmcrypt-dev libncurses5-dev libnewt-dev libpcre3 libpopt-dev libsctp-dev libsqlite3-dev libtiff4 libtiff4-dev libtool libx11-dev libxml2 libxml2-dev lksctp-tools lynx m4 make mcrypt ncftp nmap openssl sox sqlite3 ssl-cert ssl-cert unixodbc-dev unzip zip zlib1g-dev zlib1g-dev libevent-dev
+        apt-get -y install autoconf automake autotools-dev binutils bison build-essential cpp curl flex g++ gcc git-core libaudiofile-dev libc6-dev libdb-dev libexpat1 libgdbm-dev libgnutls-dev libmcrypt-dev libncurses5-dev libnewt-dev libpcre3 libpopt-dev libsctp-dev libsqlite3-dev libtiff4 libtiff4-dev libtool libx11-dev libxml2 libxml2-dev lksctp-tools lynx m4 make mcrypt ncftp nmap openssl sox sqlite3 ssl-cert ssl-cert unixodbc-dev unzip zip zlib1g-dev zlib1g-dev libevent-dev redis-server
         if [ "$DEBIAN_VERSION" = "5" ]; then
             apt-get -y update
             apt-get -y install git-core python-setuptools python-dev build-essential libreadline5-dev
@@ -183,12 +183,9 @@ esac
 virtualenv --no-site-packages $REAL_PATH
 source $REAL_PATH/bin/activate
 
-# force installation of gevent 1.03a
-pip uninstall gevent
+pip install celery requests boto
 pip install gevent==1.1.0
-pip install -e git+${PLIVO_GIT_REPO}@${BRANCH}#egg=plivo
-
-
+pip install -e "git+${PLIVO_GIT_REPO}@${BRANCH}#egg=plivo"
 
 # Check install
 if [ ! -f $REAL_PATH/bin/plivo ]; then
