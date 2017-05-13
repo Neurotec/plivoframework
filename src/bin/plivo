@@ -67,7 +67,7 @@ do_start()
             echo "$UPLOADER_NAME already running"
             uploader_already_running="true"
         else
-            $NICE --adjustment=-10 $UPLOADER_SERVER -D --pidfile=$uploader_pidfile -f $PID_PREFIX/plivo-uploader.log -D
+            $NICE --adjustment=-10 $UPLOADER_SERVER -D --pidfile=$uploader_pidfile -l DEBUG -f $PID_PREFIX/plivo-uploader.log -D
         fi
 
 	if [ "$rest_already_running" = "true" ] && [ "$outbound_already_running" = "true" ] && [ "$uploader_already_running" = "true" ]; then
