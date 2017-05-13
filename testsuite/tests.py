@@ -12,7 +12,8 @@ def make_test():
 def make_suite():
     return unittest.TestLoader().loadTestsFromNames([
         'tests.freeswitch.test_events',
-        'tests.freeswitch.test_inboundsocket',
+	'tests.freeswitch.test_inboundsocket',
+	'tests.worker.test_s3record',
     ])
 
 def run_test():

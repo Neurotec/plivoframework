@@ -11,22 +11,24 @@ app = Celery('s3records', broker="redis://localhost")
 logger = logging.getLogger('plivo-s3record-uploader')
 logger.addHandler(logging.handlers.SysLogHandler())
 
-@app.task
+@app.task(autoretry_for=(requests.exceptions.ConnectionError,), retry_kwargs={'max_retries': 5})
 def record_upload(accesskey, secretkey, nbucket, region, params):
-    logger.info("Record Params {}".format(params))
+
     if not os.path.exists(params['RecordFile']):
-        logger.error("Not {} found".format(params['RecordFile']))
-        return False
+        raise RuntimeError("Not {} found".format(params['RecordFile']))
 
     if not params['callbackUrl']:
         params['callbackUrl'] = params['actionUrl']
-        
+
+    if not params['callbackUrl']:
+        raise RuntimeError("callbackUrl not found in params")
+    
     #upload to s3
     conn = boto.connect_s3(accesskey, secretkey)
     bucket = conn.get_bucket(nbucket)
     key = Key(bucket)
     key.key = os.path.basename(params['RecordFile'])
-    key.set_content_from_filename(params['RecordFile'])
+    key.set_contents_from_filename(params['RecordFile'])
 
     data = {}
     export_keys = ['RecordUrl',
