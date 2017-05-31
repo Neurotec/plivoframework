@@ -14,6 +14,9 @@ Documentation
 
 See `Plivo Documentation <http://docs.plivo.org>`_ for more information.
 
+Cambios
+
+  * Se implementa [plivo-uploader] para envio y retroalimentacion de grabaciones con S3.
 
 <Record/>
 ~~~~~~~~~~~~~~~~
