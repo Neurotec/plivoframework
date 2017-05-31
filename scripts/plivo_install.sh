@@ -5,8 +5,8 @@
 # Copyright (c) 2011 Plivo Team. See LICENSE for details.
 
 
-PLIVO_GIT_REPO=https://repo.neurotec.co/LEADGOGO/plivoframework
-PLIVO_SETUP_SCRIPT=https://repo.neurotec.co/LEADGOGO/plivoframework/raw/master/scripts/plivo_install.sh
+PLIVO_GIT_REPO=git://github.com/Neurotec/plivoframework.git
+PLIVO_SETUP_SCRIPT=https://raw.github.com/Neurotec/plivoframework/master/scripts/ez_setup.py
 
 
 BRANCH=$2
