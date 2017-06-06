@@ -31,11 +31,17 @@ fi
 # Set full path
 echo "$PLIVO_ENV" |grep '^/' -q && REAL_PATH=$PLIVO_ENV || REAL_PATH=$PWD/$PLIVO_ENV
 
+
 # Identify Linux Distribution type
-if [ -f /etc/debian_version ] ; then
+if [[ "$VIRTUAL_ENV" != "" ]]; then
+    DIST='VIRTUALENV'
+    source $VIRTUAL_ENV/bin/activate
+elif [ -f /etc/debian_version ] ; then
     DIST='DEBIAN'
 elif [ -f /etc/redhat-release ] ; then
     DIST='CENTOS'
+elif [ -f /etc/arch-release ]; then
+    DIST='ARCH'
 else
     echo ""
     echo "This Installer should be run on a CentOS or a Debian based system"
@@ -176,11 +182,18 @@ gpgcheck = 1
             easy_install pip
         fi
     ;;
+    "ARCH")
+        pacman python2-virtualenv
+    ;;
 esac
 
 
 # Setup virtualenv
-virtualenv --no-site-packages $REAL_PATH
+if [[ $(which virtualenv2) != "" ]]; then
+    virtualenv2 --no-site-packages $REAL_PATH
+else
+    virtualenv2 --no-site-packages $REAL_PATH
+fi
 source $REAL_PATH/bin/activate
 
 pip install celery requests boto
@@ -260,6 +273,9 @@ case $DIST in
         #sed -i "s#/usr/local/plivo#$REAL_PATH#g" /etc/init.d/plivocache
         chkconfig --add plivo
         #chkconfig --add plivocache
+    ;;
+    "VIRTUALENV")
+        sed -i "s#/usr/local/plivo#$REAL_PATH#g" /etc/init.d/plivo
     ;;
 esac
 
