@@ -114,7 +114,7 @@ class RESTInboundSocket(InboundEventSocket):
             # conference::maintenance event no send record_ms just Milli
             event['variable_record_ms'] = event['Milliseconds-Elapsed']
             self.log.info("Conference Record Stop event %s"  % str(params))
-            self.notify_to_service_s3record(event, event['Unique-ID'], params)
+            self.notify_to_service_s3record(event, event['Unique-ID'], params.copy())
 
     def on_background_job(self, event):
         """
@@ -246,7 +246,7 @@ class RESTInboundSocket(InboundEventSocket):
                           'CallUUID': call_uuid
                          }
                 # add extra params
-                extra_params = self.get_extra_fs_vars(event)
+                extra_params = self.get_extra_fs_vars(event, {})
                 if extra_params:
                     params.update(extra_params)
                 if accountsid:
@@ -297,7 +297,7 @@ class RESTInboundSocket(InboundEventSocket):
                           'CallUUID': call_uuid
                          }
                 # add extra params
-                extra_params = self.get_extra_fs_vars(event)
+                extra_params = self.get_extra_fs_vars(event, {})
                 if extra_params:
                     params.update(extra_params)
                 if accountsid:
@@ -332,7 +332,7 @@ class RESTInboundSocket(InboundEventSocket):
                       'CallUUID': aleg_uuid
                      }
             # add extra params
-            extra_params = self.get_extra_fs_vars(event)
+            extra_params = self.get_extra_fs_vars(event, {})
             if extra_params:
                 params.update(extra_params)
             spawn_raw(self.send_to_url, ck_url, params, ck_method)
@@ -397,7 +397,7 @@ class RESTInboundSocket(InboundEventSocket):
                       'CallUUID': aleg_uuid
                      }
             # add extra params
-            extra_params = self.get_extra_fs_vars(event)
+            extra_params = self.get_extra_fs_vars(event, {})
             if extra_params:
                 params.update(extra_params)
             spawn_raw(self.send_to_url, ck_url, params, ck_method)
@@ -527,7 +527,7 @@ class RESTInboundSocket(InboundEventSocket):
     def set_hangup_complete(self, request_uuid, call_uuid, reason, event, hangup_url):
         params = {}
         # add extra params
-        params = self.get_extra_fs_vars(event)
+        params = self.get_extra_fs_vars(event, {})
 
         # case incoming call
         if not request_uuid:
