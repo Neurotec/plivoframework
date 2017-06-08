@@ -192,7 +192,7 @@ esac
 if [[ $(which virtualenv2) != "" ]]; then
     virtualenv2 --no-site-packages $REAL_PATH
 else
-    virtualenv2 --no-site-packages $REAL_PATH
+    virtualenv --no-site-packages $REAL_PATH
 fi
 source $REAL_PATH/bin/activate
 
