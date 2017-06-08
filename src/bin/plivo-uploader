@@ -2,6 +2,11 @@
 
 PREFIX=@PREFIX@
 
+#virtualenv
+source $PREFIX/bin/activate
+
 pushd $PREFIX
 celery $* -b redis://localhost -A plivo.worker.s3record worker
 popd
+
+deactivate
