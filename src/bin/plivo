@@ -83,7 +83,7 @@ do_start()
 		kill -0 $(cat $outbound_pidfile 2>/dev/null) 2>/dev/null \
 			&& echo "$OUTBOUND_NAME started" || echo "$OUTBOUND_NAME start failed"
 	fi
-	sleep 3s
+	sleep 10s
         if [ "$uploader_already_running" = "false" ]; then
             kill -0 $(cat $uploader_pidfile 2>/dev/null) 2>/dev/null \
 		&& echo "$UPLOADER_NAME started" || echo "$UPLOADER_NAME start failed"
